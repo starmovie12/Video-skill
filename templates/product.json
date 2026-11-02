@@ -1,0 +1,73 @@
+{
+  "title": "PRODUCT",
+  "id": "product-reel",
+  "category": "product",
+  "target_sec": 20,
+  "caption_script": "roman",
+  "facts": {
+    "title": "PRODUCT"
+  },
+  "assets": {
+    "product": "product.png"
+  },
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-SwaraNeural",
+    "rate": "+15%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "HOOK: product ka sabse bada fayda, 8–10 words",
+      "show": "HOOK: product ka sabse bada fayda, 8–10 words",
+      "hero": [
+        "HOOK"
+      ]
+    },
+    {
+      "id": "product",
+      "role": "product",
+      "say": "Product ka naam aur material, real details",
+      "show": "Product ka naam aur material, real details",
+      "data": {
+        "name": "PRODUCT NAME",
+        "tag": "NEW COLLECTION"
+      }
+    },
+    {
+      "id": "features",
+      "role": "features",
+      "say": "Teen real features",
+      "show": "Teen real features",
+      "data": {
+        "features": [
+          "Feature 1",
+          "Feature 2",
+          "Feature 3"
+        ]
+      }
+    },
+    {
+      "id": "price",
+      "role": "price",
+      "say": "Keemat (operator se confirm)",
+      "show": "Keemat (operator se confirm)",
+      "data": {
+        "price": "₹0,000",
+        "old_price": null,
+        "note": "REAL NOTE"
+      }
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "Kaun sa colour chahiye? Comment karo.",
+      "show": "Kaun sa colour chahiye? Comment karo.",
+      "data": {
+        "question": "Kaun sa colour chahiye?",
+        "cta": "DM TO ORDER"
+      }
+    }
+  ]
+}

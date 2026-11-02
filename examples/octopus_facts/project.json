@@ -1,0 +1,25 @@
+{
+  "title": "Octopus ke 3 dil",
+  "id": "octopus-facts",
+  "category": "facts",
+  "target_sec": 26,
+  "caption_script": "roman",
+  "facts": {"title": "Octopus facts", "sources": ["Octopuses have 3 hearts (2 branchial + 1 systemic) and copper-based hemocyanin blood; roughly two-thirds of their neurons are in the arms; suckers carry chemoreceptors."]},
+  "assets": {},
+  "voice": {"engine": "auto", "voice": "hi-IN-MadhurNeural", "rate": "+18%"},
+  "beats": [
+    {"id": "hook", "role": "hook", "say": "इस जानवर के तीन दिल हैं… और खून नीला!", "show": "Is janwar ke teen dil hain… aur khoon neela!", "hero": ["teen", "neela"]},
+    {"id": "hearts", "role": "fact", "say": "ऑक्टोपस के तीन दिल होते हैं: दो गलफड़ों के लिए, एक पूरे शरीर के लिए।",
+     "show": "Octopus ke teen dil hote hain: do galphadon ke liye, ek poore shareer ke liye.", "hero": ["teen"],
+     "data": {"big": "3 DIL", "line": "2 galphadon ke liye + 1 poore shareer ke liye"}},
+    {"id": "blood", "role": "compare", "say": "खून नीला क्यों? क्योंकि उसमें लोहे की जगह तांबा है, हीमोसायनिन।",
+     "show": "Khoon neela kyun? Kyunki usmein lohe ki jagah taamba hai, hemocyanin.",
+     "data": {"left": {"title": "INSAAN: LOHA", "sub": "hemoglobin · laal khoon"}, "right": {"title": "OCTOPUS: TAAMBA", "sub": "hemocyanin · neela khoon"}}},
+    {"id": "neurons", "role": "stat", "say": "इसके करीब दो-तिहाई न्यूरॉन्स दिमाग़ में नहीं, बाहों में हैं।",
+     "show": "Iske kareeb do-tihai neurons dimaag mein nahi, baahon mein hain.", "data": {"value": 67, "prefix": "~", "suffix": "%", "label": "neurons baahon mein"}},
+    {"id": "taste", "role": "line", "say": "बाहों के सक्शन कप्स चीज़ों का स्वाद भी ले सकते हैं।", "show": "Baahon ke suction cups cheezon ka swaad bhi le sakte hain.",
+     "hero": ["swaad"]},
+    {"id": "cta", "role": "cta", "say": "अगला फैक्ट किस जानवर पर चाहिए? कमेंट करो।", "show": "Agla fact kis janwar par chahiye? Comment karo.", "hero": ["janwar"],
+     "data": {"question": "Agla fact kis janwar par?", "cta": "FOLLOW"}}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "title": "Nosferatu (1922)",
+  "id": "nosferatu-1922-review",
+  "category": "movie_review",
+  "target_sec": 33,
+  "caption_script": "roman",
+  "facts": {"title": "Nosferatu", "year": 1922, "genre": ["horror", "expressionist"], "director": "F. W. Murnau", "rating": 4, "out_of": 5,
+            "where_to_watch": "Public domain (free)", "sources": ["Film history: unauthorised Dracula adaptation; 1925 German court order to destroy copies; some prints survived."]},
+  "assets": {},
+  "voice": {"engine": "auto", "voice": "hi-IN-MadhurNeural", "rate": "+18%"},
+  "beats": [
+    {"id": "hook", "role": "hook", "say": "कोर्ट ने इसे नष्ट करने को कहा… फिर भी ये बच गई!", "show": "Court ne ise nasht karne ko kaha… phir bhi ye bach gayi!", "hero": ["nasht", "bach"]},
+    {"id": "title", "role": "fact", "say": "नोस्फेरातु, 1922, डायरेक्टर एफ़ डब्ल्यू मुर्नाउ।", "show": "Nosferatu, 1922, director F. W. Murnau.", "hero": ["Nosferatu"],
+     "data": {"big": "NOSFERATU", "line": "1922 · F. W. Murnau"}},
+    {"id": "story", "role": "story", "say": "ड्रैकुला की बिना इजाज़त कॉपी, बस नाम बदलकर काउंट ऑर्लोक।", "show": "Dracula ki bina ijaazat copy, bas naam badalkar Count Orlok.",
+     "data": {"points": ["Dracula ki bina ijaazat copy", "Naam badla: Count Orlok"]}},
+    {"id": "court", "role": "timeline", "say": "ब्रैम स्टोकर की विधवा ने केस किया, और 1925 में कोर्ट ने सारी कॉपियाँ नष्ट करने को कहा।",
+     "show": "Bram Stoker ki widow ne case kiya, aur 1925 mein court ne saari copiyan nasht karne ko kaha.",
+     "data": {"events": [{"year": "1922", "label": "Release"}, {"year": "1925", "label": "Court: saari copies nasht karo"}, {"year": "AAJ", "label": "Kuch prints bach gaye"}]}},
+    {"id": "cast", "role": "cast", "say": "मैक्स श्रेक का ऑर्लोक, लंबे नाखून, गंजा सिर, आज भी सबसे डरावना वैम्पायर।",
+     "show": "Max Schreck ka Orlok, lambe naakhun, ganja sir, aaj bhi sabse daravna vampire.", "hero": ["daravna"],
+     "data": {"cast": [{"name": "Max Schreck", "role": "Count Orlok"}]}},
+    {"id": "rating", "role": "rating", "say": "मेरी रेटिंग: पाँच में से चार।", "show": "Meri rating: paanch mein se chaar.", "data": {"rating": 4, "out_of": 5, "label": "MERI RATING", "say_at": "chaar"}},
+    {"id": "verdict", "role": "verdict", "say": "हॉरर फैन हो, तो एक बार ज़रूर देखो।", "show": "Horror fan ho, to ek baar zaroor dekho.", "hero": ["zaroor"],
+     "data": {"verdict": "ZAROOR DEKHO", "rating": 4, "where": "Public domain"}},
+    {"id": "cta", "role": "cta", "say": "ऑर्लोक या ड्रैकुला, ज़्यादा डरावना कौन? कमेंट करो।", "show": "Orlok ya Dracula, zyada daravna kaun? Comment karo.", "hero": ["kaun"],
+     "data": {"question": "Orlok ya Dracula: zyada daravna kaun?", "cta": "FOLLOW"}}
+  ]
+}

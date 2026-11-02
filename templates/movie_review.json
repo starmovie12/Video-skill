@@ -1,0 +1,144 @@
+{
+  "title": "FILM TITLE",
+  "id": "film-review",
+  "category": "movie_review",
+  "target_sec": 50,
+  "caption_script": "roman",
+  "facts": {
+    "title": "FILM TITLE",
+    "year": 2026,
+    "genre": [
+      "drama"
+    ],
+    "director": "DIRECTOR (verify)",
+    "rating": 4,
+    "out_of": 5,
+    "where_to_watch": "VERIFY OTT",
+    "sources": [
+      "URL you checked"
+    ]
+  },
+  "assets": {
+    "poster": "poster.jpg",
+    "focus": [
+      [
+        0.2,
+        0.15,
+        0.8,
+        0.55
+      ]
+    ]
+  },
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-MadhurNeural",
+    "rate": "+18%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "HOOK: sabse chaunkane wali sachchi baat, 8–12 words",
+      "show": "HOOK: sabse chaunkane wali sachchi baat, 8–12 words",
+      "hero": [
+        "HOOK"
+      ]
+    },
+    {
+      "id": "intro",
+      "role": "intro",
+      "say": "FILM TITLE, saal, genre ek line mein",
+      "show": "FILM TITLE, saal, genre ek line mein",
+      "data": {
+        "title": "FILM TITLE",
+        "chips": [
+          "2026",
+          "Drama"
+        ]
+      }
+    },
+    {
+      "id": "story",
+      "role": "story",
+      "say": "Kahani ek line: kaun, kya chahta hai, kya rukawat",
+      "show": "Kahani ek line: kaun, kya chahta hai, kya rukawat",
+      "data": {
+        "points": [
+          "Point 1",
+          "Point 2",
+          "Point 3"
+        ]
+      }
+    },
+    {
+      "id": "cast",
+      "role": "cast",
+      "say": "Actor ka naam aur ek specific scene jahan wo chamke",
+      "show": "Actor ka naam aur ek specific scene jahan wo chamke",
+      "data": {
+        "cast": [
+          {
+            "name": "Actor Name",
+            "role": "Character"
+          }
+        ]
+      }
+    },
+    {
+      "id": "proscons",
+      "role": "pros_cons",
+      "say": "Taakat: specific cheez. Kamzori: specific cheez.",
+      "show": "Taakat: specific cheez. Kamzori: specific cheez.",
+      "data": {
+        "pros": [
+          "Specific pro"
+        ],
+        "cons": [
+          "Specific con"
+        ]
+      }
+    },
+    {
+      "id": "opinion",
+      "role": "opinion",
+      "say": "Meri raay? Ek quotable line.",
+      "show": "Meri raay? Ek quotable line.",
+      "hero": [
+        "raay"
+      ]
+    },
+    {
+      "id": "rating",
+      "role": "rating",
+      "say": "Rating: paanch mein se chaar.",
+      "show": "Rating: paanch mein se chaar.",
+      "data": {
+        "rating": 4,
+        "out_of": 5,
+        "label": "MERI RATING",
+        "say_at": "chaar"
+      }
+    },
+    {
+      "id": "verdict",
+      "role": "verdict",
+      "say": "Verdict: kis ke liye hai ye film.",
+      "show": "Verdict: kis ke liye hai ye film.",
+      "data": {
+        "verdict": "MUST WATCH",
+        "rating": 4,
+        "where": "VERIFY OTT"
+      }
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "Aapki rating kya hai? Comment karo.",
+      "show": "Aapki rating kya hai? Comment karo.",
+      "data": {
+        "question": "Aapki rating kya hai?",
+        "cta": "FOLLOW"
+      }
+    }
+  ]
+}

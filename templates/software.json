@@ -1,0 +1,84 @@
+{
+  "title": "APP",
+  "id": "software-review",
+  "category": "software",
+  "target_sec": 35,
+  "caption_script": "roman",
+  "facts": {
+    "title": "APP",
+    "sources": [
+      "URL"
+    ]
+  },
+  "assets": {},
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-MadhurNeural",
+    "rate": "+18%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "HOOK: ye app kya badal deta hai",
+      "show": "HOOK: ye app kya badal deta hai",
+      "hero": [
+        "HOOK"
+      ]
+    },
+    {
+      "id": "what",
+      "role": "fact",
+      "say": "App ka naam aur kaam",
+      "show": "App ka naam aur kaam",
+      "data": {
+        "big": "APP",
+        "line": "one-line what it does"
+      }
+    },
+    {
+      "id": "feat",
+      "role": "features",
+      "say": "Teen features",
+      "show": "Teen features",
+      "data": {
+        "features": [
+          "F1",
+          "F2",
+          "F3"
+        ]
+      }
+    },
+    {
+      "id": "stat",
+      "role": "stat",
+      "say": "Ek number (verify)",
+      "show": "Ek number (verify)",
+      "data": {
+        "value": 10,
+        "suffix": "x",
+        "label": "faster"
+      }
+    },
+    {
+      "id": "verdict",
+      "role": "verdict",
+      "say": "Kis ke liye hai",
+      "show": "Kis ke liye hai",
+      "data": {
+        "verdict": "WORTH IT",
+        "rating": 4
+      }
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "Aap kaun sa app use karte ho? Comment karo.",
+      "show": "Aap kaun sa app use karte ho? Comment karo.",
+      "data": {
+        "question": "Aap kaun sa use karte ho?",
+        "cta": "FOLLOW"
+      }
+    }
+  ]
+}

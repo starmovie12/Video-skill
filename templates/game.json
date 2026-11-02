@@ -1,0 +1,91 @@
+{
+  "title": "GAME",
+  "id": "game-review",
+  "category": "game",
+  "target_sec": 40,
+  "caption_script": "roman",
+  "facts": {
+    "title": "GAME",
+    "sources": [
+      "URL"
+    ]
+  },
+  "assets": {
+    "poster": "cover.jpg"
+  },
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-MadhurNeural",
+    "rate": "+18%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "HOOK: game ka sabse pagal moment",
+      "show": "HOOK: game ka sabse pagal moment",
+      "hero": [
+        "HOOK"
+      ]
+    },
+    {
+      "id": "intro",
+      "role": "intro",
+      "say": "Game ka naam, studio, platform",
+      "show": "Game ka naam, studio, platform",
+      "data": {
+        "title": "GAME",
+        "chips": [
+          "PC",
+          "PS5"
+        ]
+      }
+    },
+    {
+      "id": "pc",
+      "role": "pros_cons",
+      "say": "Taakat aur kamzori",
+      "show": "Taakat aur kamzori",
+      "data": {
+        "pros": [
+          "Pro"
+        ],
+        "cons": [
+          "Con"
+        ]
+      }
+    },
+    {
+      "id": "rating",
+      "role": "rating",
+      "say": "Rating: das mein se aath.",
+      "show": "Rating: das mein se aath.",
+      "data": {
+        "rating": 8,
+        "out_of": 10,
+        "label": "RATING",
+        "say_at": "aath"
+      }
+    },
+    {
+      "id": "verdict",
+      "role": "verdict",
+      "say": "Verdict",
+      "show": "Verdict",
+      "data": {
+        "verdict": "PLAY IT",
+        "rating": 8
+      }
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "Aapka favourite game? Comment karo.",
+      "show": "Aapka favourite game? Comment karo.",
+      "data": {
+        "question": "Aapka favourite game?",
+        "cta": "FOLLOW"
+      }
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "title": "TOPIC",
+  "id": "facts-reel",
+  "category": "facts",
+  "target_sec": 30,
+  "caption_script": "roman",
+  "facts": {
+    "title": "TOPIC",
+    "sources": [
+      "URL"
+    ]
+  },
+  "assets": {},
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-MadhurNeural",
+    "rate": "+18%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "HOOK: sabse ajeeb sachchi baat",
+      "show": "HOOK: sabse ajeeb sachchi baat",
+      "hero": [
+        "HOOK"
+      ]
+    },
+    {
+      "id": "f1",
+      "role": "fact",
+      "say": "Fact 1 with number",
+      "show": "Fact 1 with number",
+      "data": {
+        "big": "NUMBER",
+        "line": "short explanation"
+      }
+    },
+    {
+      "id": "f2",
+      "role": "compare",
+      "say": "Fact 2 as comparison",
+      "show": "Fact 2 as comparison",
+      "data": {
+        "left": {
+          "title": "A",
+          "sub": "detail"
+        },
+        "right": {
+          "title": "B",
+          "sub": "detail"
+        }
+      }
+    },
+    {
+      "id": "f3",
+      "role": "stat",
+      "say": "Fact 3 with a number",
+      "show": "Fact 3 with a number",
+      "data": {
+        "value": 50,
+        "suffix": "%",
+        "label": "what it means"
+      }
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "Agla topic kya ho? Comment karo.",
+      "show": "Agla topic kya ho? Comment karo.",
+      "data": {
+        "question": "Agla topic kya ho?",
+        "cta": "FOLLOW"
+      }
+    }
+  ]
+}

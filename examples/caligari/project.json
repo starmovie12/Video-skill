@@ -1,0 +1,188 @@
+{
+  "title": "The Cabinet of Dr. Caligari",
+  "id": "caligari-1920-review",
+  "category": "movie_review",
+  "target_sec": 45,
+  "caption_script": "roman",
+  "facts": {
+    "title": "The Cabinet of Dr. Caligari",
+    "year": 1920,
+    "genre": [
+      "horror",
+      "expressionist",
+      "drama"
+    ],
+    "director": "Robert Wiene",
+    "rating": 4.5,
+    "out_of": 5,
+    "where_to_watch": "Internet Archive (free, public domain)",
+    "sources": [
+      "Poster: Wikimedia Commons, 'The Cabinet of Doctor Caligari Movie poster.jpg', Public domain (Lionel S. Reiss, 1920)"
+    ]
+  },
+  "assets": {
+    "poster": "poster.jpg",
+    "focus": [
+      [
+        0.24,
+        0.2,
+        0.76,
+        0.58
+      ],
+      [
+        0.1,
+        0.04,
+        0.8,
+        0.72
+      ],
+      [
+        0.72,
+        0.12,
+        1.0,
+        0.62
+      ],
+      [
+        0.3,
+        0.42,
+        0.7,
+        0.7
+      ]
+    ]
+  },
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-MadhurNeural",
+    "rate": "+18%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "106 साल पुरानी फिल्म… और आज भी डरावनी!",
+      "show": "106 saal purani film… aur aaj bhi daravni!",
+      "hero": [
+        "106",
+        "daravni"
+      ]
+    },
+    {
+      "id": "intro",
+      "role": "intro",
+      "say": "द कैबिनेट ऑफ़ डॉक्टर कैलिगरी, 1920 की जर्मन हॉरर क्लासिक।",
+      "show": "The Cabinet of Dr. Caligari, 1920 ki German horror classic.",
+      "hero": [
+        "Caligari"
+      ],
+      "data": {
+        "title": "The Cabinet of Dr. Caligari",
+        "chips": [
+          "1920",
+          "Horror",
+          "Silent"
+        ]
+      }
+    },
+    {
+      "id": "story",
+      "role": "story",
+      "say": "एक पागल डॉक्टर, एक नींद में चलने वाला आदमी, और शहर में एक के बाद एक क़त्ल।",
+      "show": "Ek pagal doctor, ek neend mein chalne wala aadmi, aur shehar mein ek ke baad ek qatl.",
+      "hero": [
+        "qatl"
+      ],
+      "data": {
+        "points": [
+          "Pagal doctor",
+          "Neend mein chalta aadmi",
+          "Shehar mein qatl"
+        ]
+      }
+    },
+    {
+      "id": "cast",
+      "role": "cast",
+      "say": "वर्नर क्राउस बने कैलिगरी, और कॉनराड वाइट का सेज़ारे आज भी नींद उड़ा देता है।",
+      "show": "Werner Krauss bane Caligari, aur Conrad Veidt ka Cesare aaj bhi neend uda deta hai.",
+      "hero": [
+        "Cesare"
+      ],
+      "data": {
+        "cast": [
+          {
+            "name": "Werner Krauss",
+            "role": "Dr. Caligari"
+          },
+          {
+            "name": "Conrad Veidt",
+            "role": "Cesare"
+          }
+        ]
+      }
+    },
+    {
+      "id": "proscons",
+      "role": "pros_cons",
+      "say": "सबसे बड़ी ताक़त: टेढ़े-मेढ़े पेंट किए सेट और ज़बरदस्त ट्विस्ट। कमज़ोरी: साइलेंट फिल्म है, धीमी लगेगी।",
+      "show": "Sabse badi taakat: tedhe-medhe paint kiye set aur zabardast twist. Kamzori: silent film hai, dheemi lagegi.",
+      "data": {
+        "pros": [
+          "Painted tedhe-medhe sets",
+          "Zabardast twist"
+        ],
+        "cons": [
+          "Silent film, dheemi lagegi"
+        ]
+      }
+    },
+    {
+      "id": "opinion",
+      "role": "opinion",
+      "say": "मेरी राय? हॉरर का असली डीएनए यहीं से शुरू हुआ।",
+      "show": "Meri raay? Horror ka asli DNA yahin se shuru hua.",
+      "hero": [
+        "DNA",
+        "Horror"
+      ]
+    },
+    {
+      "id": "rating",
+      "role": "rating",
+      "say": "रेटिंग: पाँच में से साढ़े चार।",
+      "show": "Rating: paanch mein se saadhe chaar.",
+      "data": {
+        "rating": 4.5,
+        "out_of": 5,
+        "label": "MERI RATING",
+        "say_at": "saadhe"
+      }
+    },
+    {
+      "id": "verdict",
+      "role": "verdict",
+      "say": "वर्डिक्ट: मस्ट वॉच, ख़ासकर अगर आपको हॉरर पसंद है।",
+      "show": "Verdict: MUST WATCH, khaaskar agar aapko horror pasand hai.",
+      "hero": [
+        "MUST",
+        "WATCH"
+      ],
+      "data": {
+        "verdict": "MUST WATCH",
+        "rating": 4.5,
+        "where": "Internet Archive"
+      }
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "आपने सबसे पुरानी कौन सी हॉरर फिल्म देखी है? कमेंट में बताओ।",
+      "show": "Aapne sabse purani kaun si horror film dekhi hai? Comment mein batao.",
+      "hero": [
+        "purani"
+      ],
+      "data": {
+        "question": "Sabse purani horror film kaun si dekhi?",
+        "cta": "FOLLOW"
+      }
+    }
+  ]
+}

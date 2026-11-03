@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -185,7 +186,7 @@ def cmd_deliver(a):
         raise RvsError("NO_REVIEW", "write work/review.md AFTER looking at the frames (honest self-review gate)")
     txt = rv.read_text(encoding="utf-8")
     sec = txt.split("## Weaknesses", 1)[-1].split("\n## ", 1)[0] if "## Weaknesses" in txt else ""
-    weak = [ln for ln in sec.splitlines() if ln.strip().startswith("- ")]
+    weak = [ln for ln in sec.splitlines() if re.match(r"\s*(?:[-*•]|\d+[.)])\s+\S", ln)]  # bullets or numbered points
     if len(weak) < 2:
         raise RvsError("REVIEW_SHALLOW", "review.md needs a '## Weaknesses' section with ≥2 honest bullet points")
     print(json.dumps({"deliver": rep["video"], "review": str(rv), "weaknesses_listed": len(weak)}, indent=1))

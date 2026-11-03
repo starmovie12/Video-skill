@@ -15,7 +15,7 @@ ROLE_ALIASES = S.ROLE_DEFAULTS
 
 
 def load_assets(project: dict, root: Path) -> dict:
-    a = {}
+    a = {"root": root}
     asd = project.get("assets", {}) or {}
     if asd.get("poster"):
         pth = (root / asd["poster"]) if not Path(asd["poster"]).is_absolute() else Path(asd["poster"])
@@ -27,6 +27,16 @@ def load_assets(project: dict, root: Path) -> dict:
     if asd.get("product"):
         a["product"] = Image.open(root / asd["product"]).convert("RGBA")
     return a
+
+
+def _build(ctx, scn):
+    S.ARCH[ctx.beat["archetype"]]["fn"](ctx, scn)
+    S.add_stickers(ctx, scn)
+    if getattr(scn.bg, "dynamic", False):  # footage cuts land on words → camera kick + swish
+        for tc in scn.bg.cut_times():
+            scn.cam.punch(tc + 0.02, 0.07)
+            scn.cue(tc - 0.06, "swish", 0.6)
+        S.add_grade_fx(ctx, scn)
 
 
 class Timeline:
@@ -44,6 +54,20 @@ class Timeline:
         variants.setdefault("hook_slam", dna["opening"])
         self.scenes = []
         self.plan = []
+        # scene boundaries = voice beat starts, snapped onto the music beat grid (±0.2 s) → cuts land on the beat
+        bpm, off = assets.get("beat_grid") or (dna.get("bpm") or 0, 0.0)
+        bounds = [0.0] + [sp["t0"] for sp in spans[1:]]
+        self.snapped = 0
+        if bpm:
+            per = 60.0 / bpm
+            for k in range(1, len(bounds)):
+                cand = off + round((bounds[k] - off) / per) * per
+                lo = bounds[k - 1] + 0.8
+                hi = (bounds[k + 1] - 0.8) if k + 1 < len(bounds) else self.duration - 0.8
+                if abs(cand - bounds[k]) <= 0.2 and lo < cand < hi:
+                    bounds[k] = round(cand, 3)
+                    self.snapped += 1
+        bounds.append(self.duration)
         for i, (b, sp) in enumerate(zip(beats, spans)):
             arch = b.get("archetype", "auto")
             if arch in ("auto", None, "") or arch not in S.ARCH:
@@ -62,14 +86,13 @@ class Timeline:
             if arch not in variants:
                 variants[arch] = rng.choice(list(S.ARCH[arch]["variants"]))
             used.append(arch)
-            t0 = 0.0 if i == 0 else sp["t0"] - 0.0
-            t1 = spans[i + 1]["t0"] if i + 1 < len(spans) else self.duration
+            t0, t1 = bounds[i], bounds[i + 1]
             beat = dict(b, archetype=arch)
             if i == 0 and arch != "hook_slam" and b.get("role") == "hook":
                 beat["archetype"] = "hook_slam"
             words = [dict(w, t0=round(w["t0"] - t0, 3), t1=round(w["t1"] - t0, 3)) for w in voice["words"] if w["beat"] == i]
             ctx = S.Ctx(dna, beat, words, t1 - t0, i, len(beats), assets, facts)
-            sc = Scene(i, t0, t1, beat["archetype"], (lambda c: (lambda scn: S.ARCH[c.beat["archetype"]]["fn"](c, scn)))(ctx),
+            sc = Scene(i, t0, t1, beat["archetype"], (lambda c: (lambda scn: _build(c, scn)))(ctx),
                          {"variant": ctx.variant, "role": b.get("role"), "id": b.get("id", f"b{i + 1}"), "captions": ctx.cap_on})
             self.scenes.append(sc)
             self.plan.append({"id": sc.meta["id"], "role": b.get("role"), "archetype": beat["archetype"],
@@ -150,6 +173,17 @@ class Timeline:
             q = min(1.0, t / self.duration)
             d = ImageDraw.Draw(fr)
             d.rectangle([0, 0, int(W * q), 7], fill=rgba(self.dna["palette"]["accent"], 230))
+        return fr.convert("RGB")
+
+    def background_frame(self, t: float):
+        """The scene's footage/plate only (camera applied, no text) — clean base for covers."""
+        sc = self.scenes[self.scene_at(t)].ensure()
+        sc.cam.bind(t - sc.t0)
+        bg = sc.bg
+        fr = bg.render(sc.cam, t - sc.t0) if getattr(bg, "dynamic", False) else bg.render(sc.cam)
+        for ly in sc.layers:  # keep pictures (poster cards, product shots), drop text/decoration
+            if getattr(ly, "role", "") == "image":
+                ly.render(fr, t - sc.t0, sc.cam)
         return fr.convert("RGB")
 
     def summary(self):

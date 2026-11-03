@@ -113,3 +113,17 @@ Status values:
 | P-53 | Novelty pushed playful music onto horror → tone and music bound to genre |
 | P-54 | Film-grain noise made 211 MB files (38 Mbps) → static light grain + 10 Mbps cap |
 | P-55 | QA "static" metric fooled by grain → % of pixels changing > 6 levels, caption band excluded |
+
+## v2 — operator feedback after the first demos
+
+| # | Operator said | Status | Fix |
+|---|---|---|---|
+| V-01 | "Awaaz bahut bakwas, aajkal ki videos jaisi nahi" | PARTIAL → much better | Reel pacing (pause trimming, hero-word dramatic beats), broadcast voice chain, `voices` audition of 5 presets (intelligibility measured), ElevenLabs premium with exact timing, operator's own recording with Whisper alignment. **Limit:** free TTS has a ceiling; the most natural options need ElevenLabs or a human voice. |
+| V-02 | "Editing aur graphics bakwas, attractive nahi" | FIXED (design) | Footage-first editing (real stills/clips full-screen, shot every ~2 s, cuts on words, punch + flash + light leak), Commons free-licence media search, 3D emoji stickers, viral captions, stronger outlines + scrim for legibility |
+| V-03 | "Boring, maza nahi aa raha" | FIXED (design) | Faster cut rhythm, stickers + SFX on events, beat-snapped cuts, sidechain-pumped music, phonk mood |
+| V-04 | "Kuch missing / code adhura" | FIXED | Added: voice audition, own-voice + any-TTS alignment, ElevenLabs, media scan/search, shot detection, cover + grid crop, upload pack with credits, no-music export, beat sync for operator music, lint for media/cast refs, CI, 18 tests (v1 had 10) |
+| P-56 | Cover showed hook text behind the title | FIXED | Cover is built from a clean background frame |
+| P-57 | Stickers covered titles | FIXED | Free-spot placement against every text block |
+| P-58 | Pros/cons balance chips overflowed the frame with long points | FIXED | Balance only for short points; chips width-bounded and clamped |
+| P-59 | Story cards clipped two-line text | FIXED | Thumbnail left, text vertically centred over the full card height |
+| P-60 | Camera-shake rotation made every frame re-rotate big sprites (slow) | FIXED | Rotation threshold + quantisation, bilinear for big sprites |

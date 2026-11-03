@@ -3,27 +3,21 @@ composed to the video's timeline (hits on transitions, drop on the verdict), des
 (voice chain, sidechain ducking, two-pass loudnorm to −14 LUFS / −1.5 dBTP)."""
 from __future__ import annotations
 
-import asyncio
-import hashlib
-import importlib.util
 import json
 import math
-import os
-import re
-import shutil
 import subprocess
 from pathlib import Path
 
 import numpy as np
 
-from .core import RvsError, Rng, clamp, log, rvs_home
+from .core import Rng, log
 
 SR = 48000
 
 
 # ───────────────────────── small DSP toolkit ─────────────────────────
-def ffmpeg_decode(path, sr=SR, ch=1) -> np.ndarray:
-    out = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-f", "f32le", "-ac", str(ch), "-ar", str(sr), "-"],
+def ffmpeg_decode(path, sr=SR, ch=1, start=0.0) -> np.ndarray:
+    out = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{start:.3f}", "-i", str(path), "-f", "f32le", "-ac", str(ch), "-ar", str(sr), "-"],
                          capture_output=True, timeout=300).stdout
     a = np.frombuffer(out, np.float32).copy()
     return a.reshape(-1, ch) if ch > 1 else a
@@ -139,13 +133,16 @@ def midi(n):
 
 # ───────────────────────── instruments ─────────────────────────
 def kick(seed=0, punch=1.0, dur=0.42):
+    """Layered kick: click transient + pitch-swept body + sub tail, soft-clipped."""
     n = int(dur * SR)
     t = np.arange(n) / SR
-    f = 46 + 110 * np.exp(-t / 0.035) * punch
-    body = sine(f, n) * expdecay(n, 0.16)
-    click = fft_filter(noise(int(0.006 * SR), seed), hp=2000) * 0.5
-    body[: len(click)] += click
-    return np.tanh(body * 1.6) * 0.9
+    f = 44 + 120 * np.exp(-t / 0.03) * punch
+    body = sine(f, n) * expdecay(n, 0.14)
+    sub = sine(np.full(n, 46.0), n) * expdecay(n, 0.22) * 0.5
+    click = fft_filter(noise(int(0.004 * SR), seed), hp=2500) * 0.6
+    x = body + sub
+    x[: len(click)] += click
+    return (np.tanh(x * 1.9) * 0.9).astype(np.float32)
 
 
 def snare(seed=0, dur=0.26, tone=185):
@@ -166,8 +163,21 @@ def clap(seed=0):
 
 
 def hat(seed=0, open_=False):
-    n = int((0.28 if open_ else 0.05) * SR)
-    return fft_filter(noise(n, seed), hp=7000, lp=14000) * expdecay(n, 0.09 if open_ else 0.014) * 0.5
+    """808-style metallic hat: six detuned square oscillators, high-passed (sounds like a real drum machine, not hiss)."""
+    n = int((0.32 if open_ else 0.06) * SR)
+    t = np.arange(n) / SR
+    x = sum(np.sign(np.sin(2 * np.pi * f * t)) for f in (205.3, 304.4, 369.6, 522.7, 540.0, 800.0)).astype(np.float32)
+    x = fft_filter(x, hp=7500, lp=15000)
+    return x * expdecay(n, 0.1 if open_ else 0.015) * 0.28
+
+
+def cowbell(freq_scale=1.0, dur=0.25):
+    """TR-808 cowbell (two squares 540/800 Hz, band-passed) — the phonk lead."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    x = (np.sign(np.sin(2 * np.pi * 540 * freq_scale * t)) + np.sign(np.sin(2 * np.pi * 800 * freq_scale * t))).astype(np.float32)
+    x = fft_filter(x, hp=500, lp=4500)
+    return np.tanh(x * expdecay(n, 0.09) * 1.5) * 0.35
 
 
 def tom(seed=0, f0=95, dur=0.9):
@@ -349,9 +359,13 @@ MOODS = {
                          lead="keys_sparse", pad_cut=1800, shimmer=True),
     "hype_trap":    dict(bpm=(138, 146), scale="minor", prog=[0, 5, 6, 4], kick="x......x..x.....", snare="........x.......", hat="xxxxxxxxxxxxxxxx",
                          bass="808", lead="bell_sparse", pad_cut=1000, half=True),
+    "phonk":        dict(bpm=(128, 140), scale="minor", prog=[0, 5, 6, 4], kick="x.....x...x.....", snare="........x.......", hat="x.x.x.xxx.x.x.xx",
+                         bass="808", lead="cowbell", pad_cut=900, half=True, pump=0.6, drive=1.6),
     "playful_pluck": dict(bpm=(108, 116), scale="major", prog=[0, 3, 4, 0], kick="x.......x.......", snare="....x.......x...", hat="..x...x...x...x.",
                           bass="bounce", lead="pluck", pad_cut=2400, clap=True),
 }
+for _m in ("upbeat_pop", "synthwave", "hype_trap"):
+    MOODS[_m]["pump"] = 0.45  # modern sidechain feel
 
 
 def chord(root_midi, scale, degree, size=3):
@@ -363,11 +377,17 @@ def chord(root_midi, scale, degree, size=3):
     return notes
 
 
-def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=None) -> np.ndarray:
-    """Render a stereo music bed of `duration` s. sections=[(t0,t1,'hook'|'body'|'build'|'drop'|'outro')], hits=[t,...] (transitions)."""
+def mood_bpm(mood: str, seed: int) -> float:
+    M = MOODS.get(mood, MOODS["upbeat_pop"])
+    return round(Rng(seed).uniform(*M["bpm"]), 2)
+
+
+def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=None, bpm=None) -> np.ndarray:
+    """Render a stereo music bed of `duration` s. sections=[(t0,t1,'hook'|'body'|'build'|'drop'|'outro')], hits=[t,...] (transitions).
+    The beat grid starts at t=0 with `bpm`, so the timeline can snap its cuts to the music."""
     M = MOODS.get(mood, MOODS["upbeat_pop"])
     r = Rng(seed)
-    bpm = r.uniform(*M["bpm"])
+    bpm = bpm or mood_bpm(mood, seed)
     beat = 60 / bpm
     bar = beat * 4
     step = bar / 16
@@ -383,6 +403,7 @@ def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=Non
                 return s
         return "outro"
     k_s, s_s, h_s = kick(seed, 1.0), snare(seed), hat(seed)
+    kick_times = []
     cl = clap(seed)
     nbars = int(duration / bar) + 2
     for b in range(nbars):
@@ -405,6 +426,7 @@ def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=Non
             t = tb + i * step + (M.get("swing", 0) * step if i % 2 else 0)
             if M["kick"] and M["kick"][i] == "x" and (full or light):
                 place(drums, k_s, t, 0.95 if full else 0.7)
+                kick_times.append(t)
             if M["snare"] and M["snare"][i] == "x" and (full or light):
                 place(drums, cl if M.get("clap") and full else s_s, t, 0.6, 0.1)
             if M["hat"] and M["hat"][i] == "x" and (full or (light and i % 2 == 0)):
@@ -444,6 +466,11 @@ def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=Non
             for i in hits_:
                 for x in ch:
                     place(tonal, keys(midi(x + 12), step * 5), tb + i * step, 0.3)
+        elif lead == "cowbell":
+            pat = (0, 3, 6, 8, 10, 13) if b % 2 == 0 else (0, 3, 6, 9, 12, 14)
+            for i in pat:
+                semis = SCALES[M["scale"]][(deg + (i % 5)) % 7] - SCALES[M["scale"]][deg % 7]
+                place(tonal, cowbell(2 ** (semis / 12)), tb + i * step, 0.5 if full else 0.35, -0.2 + 0.4 * (i % 2))
         elif lead == "bell_sparse" and b % 2 == 0:
             place(tonal, bell(midi(r.choice(scale_notes) + 12), 1.4), tb + r.choice([0, 4, 8]) * step, 0.22, r.uniform(-0.5, 0.5))
     # timeline-synced hits (transitions) + braam on the drop
@@ -460,7 +487,17 @@ def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=Non
     if M.get("shimmer"):
         for t in np.arange(0, duration, bar * 2):
             place(tonal, sfx("shimmer", seed + int(t)), float(t) + bar, 0.18, r.uniform(-0.6, 0.6))
+    if M.get("pump") and kick_times:  # sidechain pumping: tonal bus ducks on every kick
+        g = np.ones(n, np.float32)
+        tt = np.arange(n) / SR
+        for tk in kick_times:
+            i0 = int(tk * SR)
+            seg = tt[i0:i0 + int(0.35 * SR)] - tk
+            g[i0:i0 + len(seg)] = np.minimum(g[i0:i0 + len(seg)], 1 - M["pump"] * np.exp(-seg / 0.09))
+        tonal *= g[:, None]
     mix_ = tonal * 0.9 + drums
+    if M.get("drive"):
+        mix_ = np.tanh(mix_ * M["drive"]) / np.tanh(M["drive"])
     wet = convolve(mix_.mean(1) * 0.6, reverb_ir(2.0, seed, 5000))
     mix_ = mix_ + wet * 0.22
     if M.get("vinyl"):
@@ -473,285 +510,42 @@ def compose(mood: str, duration: float, key="D", seed=0, sections=None, hits=Non
     return (mix_ / peak * 0.8).astype(np.float32)
 
 
+def beat_grid(x: np.ndarray, sr=SR) -> tuple[float, float]:
+    """Tempo + phase of an operator music file: spectral-flux onsets → autocorrelation tempo (70–180 BPM) → best phase."""
+    mono = x.mean(1) if x.ndim == 2 else x
+    hop, win = 512, 2048
+    nfr = max(1, (len(mono) - win) // hop)
+    frames = np.lib.stride_tricks.as_strided(mono, (nfr, win), (mono.strides[0] * hop, mono.strides[0]))
+    mag = np.abs(np.fft.rfft(frames * np.hanning(win), axis=1))
+    flux = np.maximum(0, np.diff(np.log1p(mag), axis=0)).sum(1)
+    flux = (flux - flux.mean()) / (flux.std() + 1e-9)
+    fps = sr / hop
+    best, bpm = -1e9, 110.0
+    for cand in np.arange(70, 180, 0.5):
+        lag = fps * 60 / cand
+        l0 = int(lag)
+        if l0 + 1 >= len(flux):
+            continue
+        ac = np.dot(flux[:-l0 - 1], (flux[l0:-1] * (1 - (lag - l0)) + flux[l0 + 1:] * (lag - l0)))
+        score = ac * np.exp(-0.5 * (np.log2(cand / 115)) ** 2 / 0.6 ** 2)
+        if score > best:
+            best, bpm = score, float(cand)
+    period = fps * 60 / bpm
+    phases = np.arange(0, period, 0.5)
+    sc = [flux[np.clip(np.round(np.arange(ph, len(flux), period)).astype(int), 0, len(flux) - 1)].sum() for ph in phases]
+    offset = float(phases[int(np.argmax(sc))] / fps)
+    return round(bpm, 2), round(offset, 3)
+
+
 def pad_stereo(x, b):
     d = 120 + (b % 3) * 40
     return np.stack([x, np.concatenate([np.zeros(d, np.float32), x[:-d]])], 1)
 
 
-# ───────────────────────── TTS ─────────────────────────
-DEVA_VOWELS = re.compile(r"[अ-औा-ौॠ-ॣ]")
-LAT_VOWELS = re.compile(r"[aeiouy]+", re.I)
+# ───────────────────────── voice (moved to voice.py; re-exported for compatibility) ─────────────────────────
+from .voice import VOICE_CHAIN, synth_voice, voice_with_duration_control  # noqa: E402
 
-
-def syllables(w: str) -> float:
-    d = len(DEVA_VOWELS.findall(w))
-    consonants = len(re.findall(r"[क-ह]", w))
-    lat = len(LAT_VOWELS.findall(w))
-    return max(1.0, d + 0.5 * max(0, consonants - d) + lat + (0.6 if any(ch.isdigit() for ch in w) else 0))
-
-
-def _norm(s):
-    return re.sub(r"[^\wऀ-ॿ]", "", (s or "").lower())
-
-
-def _ssl_connector():
-    import ssl
-    import aiohttp
-    ca = os.environ.get("RVS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE") or os.environ.get("REQUESTS_CA_BUNDLE")
-    if ca and os.path.exists(ca):
-        return aiohttp.TCPConnector(ssl=ssl.create_default_context(cafile=ca))
-    return None
-
-
-async def _edge_one(text, voice, rate, pitch, out_mp3):
-    import edge_tts
-    kw = {"boundary": "WordBoundary"}
-    conn = _ssl_connector()
-    if conn is not None:
-        kw["connector"] = conn
-    if os.environ.get("HTTPS_PROXY"):
-        kw["proxy"] = os.environ["HTTPS_PROXY"]
-    c = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch, **kw)
-    bounds = []
-    with open(out_mp3, "wb") as f:
-        async for ch in c.stream():
-            if ch["type"] == "audio":
-                f.write(ch["data"])
-            elif ch["type"] == "WordBoundary":
-                bounds.append((ch["offset"] / 1e7, (ch["offset"] + ch["duration"]) / 1e7, ch["text"]))
-    if not bounds or os.path.getsize(out_mp3) < 500:
-        raise RvsError("TTS_EMPTY", "edge-tts returned no audio/boundaries")
-    return bounds
-
-
-async def _edge_all(jobs, conc=4):
-    sem = asyncio.Semaphore(conc)
-
-    async def run(j):
-        async with sem:
-            for attempt in range(3):
-                try:
-                    return await asyncio.wait_for(_edge_one(*j), timeout=45)
-                except Exception as e:  # network flakiness → retry, then surface
-                    if attempt == 2:
-                        raise RvsError("TTS_EDGE", f"{type(e).__name__}: {e}") from e
-                    await asyncio.sleep(1.5 * (attempt + 1))
-    return await asyncio.gather(*(run(j) for j in jobs))
-
-
-def _align(tokens: list[str], bounds: list[tuple]) -> list[tuple]:
-    """Map edge-tts word boundaries onto the script tokens (greedy, tolerant to punctuation/number splitting)."""
-    out = [None] * len(tokens)
-    bi = 0
-    for ti, tok in enumerate(tokens):
-        nt = _norm(tok)
-        if not nt:
-            continue
-        for look in range(bi, min(len(bounds), bi + 4)):
-            nb = _norm(bounds[look][2])
-            if nb and (nb == nt or nt.startswith(nb) or nb.startswith(nt) or nb in nt):
-                t0, t1 = bounds[look][0], bounds[look][1]
-                j = look + 1
-                while j < len(bounds) and _norm(bounds[j][2]) and _norm(bounds[j][2]) in nt and not (ti + 1 < len(tokens) and _norm(bounds[j][2]) == _norm(tokens[ti + 1])):
-                    t1 = bounds[j][1]
-                    j += 1
-                out[ti] = (t0, t1)
-                bi = j
-                break
-    # interpolate gaps
-    known = [i for i, v in enumerate(out) if v]
-    for i in range(len(out)):
-        if out[i] is None:
-            prev = max([k for k in known if k < i], default=None)
-            nxt = min([k for k in known if k > i], default=None)
-            a = out[prev][1] if prev is not None else 0.0
-            b = out[nxt][0] if nxt is not None else a + 0.3
-            out[i] = (a, max(a + 0.08, b))
-    return out
-
-
-def _trim(x: np.ndarray, thr=0.012):
-    idx = np.where(np.abs(x) > thr)[0]
-    if len(idx) == 0:
-        return x, 0.0
-    a = max(0, idx[0] - int(0.025 * SR))
-    b = min(len(x), idx[-1] + int(0.07 * SR))
-    return x[a:b], a / SR
-
-
-def _estimate_words(x: np.ndarray, tokens: list[str]) -> list[tuple]:
-    """For engines without word events: voiced span split by syllable weight, snapped to energy dips (labelled ESTIMATED)."""
-    hop = int(0.01 * SR)
-    e = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) for i in range(0, max(1, len(x) - hop), hop)])
-    dur = len(x) / SR
-    wts = np.array([syllables(t) for t in tokens], float)
-    cum = np.concatenate([[0], np.cumsum(wts)]) / wts.sum() * dur
-    out = []
-    for i in range(len(tokens)):
-        a, b = cum[i], cum[i + 1]
-        j = int(a * 100)
-        lo, hi = max(0, j - 8), min(len(e) - 1, j + 8)
-        if hi > lo and i > 0:
-            a = (lo + int(np.argmin(e[lo:hi]))) / 100
-        out.append((a, b))
-    for i in range(len(out) - 1):
-        out[i] = (out[i][0], max(out[i][0] + 0.06, out[i + 1][0]))
-    return out
-
-
-def kokoro_paths():
-    m = os.environ.get("RVS_KOKORO_MODEL") or str(rvs_home() / "models/kokoro-v1.0.onnx")
-    v = os.environ.get("RVS_KOKORO_VOICES") or str(rvs_home() / "models/voices-v1.0.bin")
-    return (m, v) if os.path.exists(m) and os.path.exists(v) else (None, None)
-
-
-def synth_voice(project: dict, work: Path, rate_override: str | None = None) -> dict:
-    """Synthesize every beat → voice.wav + words.json (global word timings, beat spans). Cached by content hash."""
-    vcfg = project.get("voice", {})
-    engine = vcfg.get("engine", "auto")
-    voice = vcfg.get("voice", "hi-IN-MadhurNeural")
-    base_rate = rate_override or vcfg.get("rate", "+18%")
-    pitch = vcfg.get("pitch", "+0Hz")
-    beats = project["beats"]
-    tdir = work / "tts"
-    tdir.mkdir(parents=True, exist_ok=True)
-
-    def beat_rate(b):
-        if "rate" in b:
-            return b["rate"]
-        bonus = {"hook": 4, "verdict": -3, "cta": 0, "rating": -2}.get(b.get("role", ""), 0)
-        r0 = int(re.sub(r"[^\-\d]", "", base_rate) or 0)
-        return f"{r0 + bonus:+d}%"
-    clips, used_engine, timing = [], None, "exact"
-    order = ["edge", "kokoro", "espeak"] if engine == "auto" else [engine]
-    last_err = None
-    for eng in order:
-        try:
-            clips = []
-            if eng == "edge":
-                if importlib.util.find_spec("edge_tts") is None:
-                    raise RvsError("TTS_EDGE", "edge-tts not installed")
-                jobs, metas = [], []
-                for i, b in enumerate(beats):
-                    say = b.get("say") or b.get("show")
-                    h = hashlib.sha1(json.dumps([eng, voice, beat_rate(b), pitch, say]).encode()).hexdigest()[:16]
-                    mp3, js = tdir / f"{h}.mp3", tdir / f"{h}.json"
-                    metas.append((mp3, js, say))
-                    if not js.exists():
-                        jobs.append((i, (say, voice, beat_rate(b), pitch, str(mp3))))
-                if jobs:
-                    log(f"voice: edge-tts {voice} · {len(jobs)} beats to synthesize (cached {len(beats) - len(jobs)})")
-                    res = asyncio.run(_edge_all([j for _, j in jobs]))
-                    for (i, _), bounds in zip(jobs, res):
-                        metas[i][1].write_text(json.dumps(bounds, ensure_ascii=False))
-                for mp3, js, say in metas:
-                    x = ffmpeg_decode(mp3)
-                    bounds = json.loads(js.read_text())
-                    x, off = _trim(x)
-                    toks = say.split()
-                    tw = [(max(0.0, a - off), max(0.0, b - off)) for a, b in _align(toks, bounds)]
-                    clips.append((x, toks, tw))
-                timing = "exact (edge-tts WordBoundary)"
-            elif eng == "kokoro":
-                from kokoro_onnx import Kokoro
-                m, v = kokoro_paths()
-                if not m:
-                    raise RvsError("TTS_KOKORO", "Kokoro model files not found (set RVS_KOKORO_MODEL / RVS_KOKORO_VOICES)")
-                k = Kokoro(m, v)
-                kv = vcfg.get("kokoro_voice", "hm_omega")
-                spd = 1.0 + int(re.sub(r"[^\-\d]", "", base_rate) or 0) / 100 * 0.8
-                for b in beats:
-                    say = b.get("say") or b.get("show")
-                    a, sr = k.create(say, voice=kv, speed=float(clamp(spd, 0.8, 1.35)), lang=vcfg.get("kokoro_lang", "hi"))
-                    x = np.asarray(a, np.float32)
-                    if sr != SR:
-                        x = np.interp(np.linspace(0, len(x) - 1, int(len(x) * SR / sr)), np.arange(len(x)), x).astype(np.float32)
-                    x, _ = _trim(x)
-                    toks = say.split()
-                    clips.append((x, toks, _estimate_words(x, toks)))
-                timing = "estimated (Kokoro: syllable-weighted + energy snapping)"
-            else:
-                exe = shutil.which("espeak-ng") or shutil.which("espeak")
-                if not exe:
-                    raise RvsError("TTS_NONE", "no espeak-ng")
-                for b in beats:
-                    say = b.get("say") or b.get("show")
-                    wav = tdir / f"es_{hashlib.sha1(say.encode()).hexdigest()[:10]}.wav"
-                    subprocess.run([exe, "-v", vcfg.get("espeak_voice", "hi"), "-s", "185", "-w", str(wav), say], check=True, timeout=120)
-                    x, _ = _trim(ffmpeg_decode(wav))
-                    toks = say.split()
-                    clips.append((x, toks, _estimate_words(x, toks)))
-                timing = "estimated (espeak-ng)"
-            used_engine = eng
-            break
-        except Exception as e:  # try the next engine, but remember why
-            last_err = e
-            log(f"voice: engine {eng} failed → {type(e).__name__}: {str(e)[:160]}")
-    if used_engine is None:
-        raise RvsError("TTS_FAIL", f"all TTS engines failed: {last_err}")
-    # assemble with designed pauses
-    out, words, spans, cur = [], [], [], 0.0
-    lead = 0.12
-    out.append(np.zeros(int(lead * SR), np.float32))
-    cur = lead
-    for i, (b, (x, toks, tw)) in enumerate(zip(beats, clips)):
-        show = (b.get("show") or b.get("say")).split()
-        start = cur
-        k, m = len(toks), len(show)
-        if m == k:
-            for j in range(k):
-                words.append({"say": toks[j], "show": show[j], "t0": round(start + tw[j][0], 3), "t1": round(start + tw[j][1], 3), "beat": i})
-        elif m < k:  # several spoken tokens → one displayed word
-            for s_ in range(m):
-                j0 = int(s_ * k / m)
-                j1 = max(j0, int((s_ + 1) * k / m) - 1)
-                words.append({"say": " ".join(toks[j0:j1 + 1]), "show": show[s_], "t0": round(start + tw[j0][0], 3),
-                              "t1": round(start + tw[j1][1], 3), "beat": i})
-        else:  # one spoken token → several displayed words: split its interval
-            groups = {}
-            for s_ in range(m):
-                groups.setdefault(int(s_ * k / m), []).append(s_)
-            for j, ss in sorted(groups.items()):
-                a, e_ = tw[j]
-                for q, s_ in enumerate(ss):
-                    words.append({"say": toks[j], "show": show[s_], "t0": round(start + a + (e_ - a) * q / len(ss), 3),
-                                  "t1": round(start + a + (e_ - a) * (q + 1) / len(ss), 3), "beat": i})
-        out.append(x)
-        cur += len(x) / SR
-        nxt = beats[i + 1] if i + 1 < len(beats) else None
-        gap = b.get("pause_after_ms")
-        if gap is None:
-            gap = 90 if b.get("role") == "hook" else 380 if (nxt and nxt.get("role") == "verdict") else 260 if str(b.get("say", "")).strip().endswith("?") else 170
-        gap = gap / 1000 if nxt else 0.25
-        spans.append({"beat": i, "t0": round(start, 3), "t1": round(cur, 3)})
-        out.append(np.zeros(int(gap * SR), np.float32))
-        cur += gap
-    voice_x = np.concatenate(out)
-    wav = work / "voice.wav"
-    write_wav(wav, voice_x)
-    info = {"engine": used_engine, "voice": voice, "rate": base_rate, "timing": timing, "duration": round(len(voice_x) / SR, 3),
-            "words": words, "spans": spans}
-    (work / "words.json").write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding="utf-8")
-    log(f"voice: {used_engine} · {info['duration']:.1f}s · {len(words)} words · timing {timing}")
-    return info
-
-
-def voice_with_duration_control(project: dict, work: Path) -> dict:
-    """Hit the target duration: if the first pass misses by >7 %, re-synthesize once with a corrected rate (bounded +0…+35 %)."""
-    info = synth_voice(project, work)
-    tgt = project.get("target_sec")
-    if not tgt or info["engine"] != "edge":
-        return info
-    err = info["duration"] / tgt - 1
-    if abs(err) <= 0.07:
-        return info
-    r0 = int(re.sub(r"[^\-\d]", "", info["rate"]) or 0)
-    r1 = int(round((1 + r0 / 100) * (1 + err) * 100 - 100))
-    r1 = int(clamp(r1, 10, 32))  # keep the voice energetic; bigger misses must be fixed in the script
-    if r1 == r0:
-        return info
-    log(f"duration control: {info['duration']:.1f}s vs target {tgt}s → rate {r0:+d}% → {r1:+d}%")
-    return synth_voice(project, work, rate_override=f"{r1:+d}%")
+__all__ = ["synth_voice", "voice_with_duration_control", "build_mix", "compose", "sfx"]
 
 
 # ───────────────────────── mix ─────────────────────────
@@ -785,19 +579,19 @@ def measure_loudness(path: Path) -> dict:
     return {"I": float(m["input_i"]), "TP": float(m["input_tp"]), "LRA": float(m["input_lra"])}
 
 
-def build_mix(work: Path, voice_info: dict, duration: float, dna: dict, cues: list[dict], sections, hits, music_file=None) -> dict:
+def build_mix(work: Path, voice_info: dict, duration: float, dna: dict, cues: list[dict], sections, hits, music_file=None,
+              music_start=0.0, music_mode="procedural") -> dict:
     vx = ffmpeg_decode(work / "voice.wav")
     # voice chain (MEASURED earlier on this stack): HPF, gentle compression, presence
     proc = work / "voice_proc.wav"
-    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(work / "voice.wav"), "-af",
-                    "highpass=f=75,acompressor=threshold=0.125:ratio=3:attack=6:release=90:makeup=1.6,equalizer=f=3200:t=q:w=1.1:g=2.2,"
-                    "equalizer=f=250:t=q:w=1.0:g=-1.5", "-ar", "48000", "-ac", "1", str(proc)], check=True, timeout=300)
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(work / "voice.wav"), "-af", VOICE_CHAIN, "-ar", "48000", "-ac", "1", str(proc)],
+                   check=True, timeout=300)
     vx = ffmpeg_decode(proc)
     n = int((duration + 0.05) * SR)
     vx = np.pad(vx, (0, max(0, n - len(vx))))[:n]
     seed = dna["seed"] % 100000
     if music_file and Path(music_file).exists():
-        mus = ffmpeg_decode(music_file, ch=2)
+        mus = ffmpeg_decode(music_file, ch=2, start=music_start)
         if len(mus) < n:
             mus = np.concatenate([mus] * (n // max(1, len(mus)) + 1))
         mus = mus[:n]
@@ -806,7 +600,7 @@ def build_mix(work: Path, voice_info: dict, duration: float, dna: dict, cues: li
         mus = mus / (np.abs(mus).max() + 1e-9) * 0.8
         music_src = f"operator file {Path(music_file).name}"
     else:
-        mus = compose(dna["music_mood"], duration + 0.05, dna.get("music_key", "D"), seed, sections, hits)
+        mus = compose(dna["music_mood"], duration + 0.05, dna.get("music_key", "D"), seed, sections, hits, bpm=dna.get("bpm"))
         mus = np.pad(mus, ((0, max(0, n - len(mus))), (0, 0)))[:n]
         music_src = f"procedural {dna['music_mood']} (original, licence-free)"
     duck = ducking_env(vx)[:n]
@@ -820,6 +614,10 @@ def build_mix(work: Path, voice_info: dict, duration: float, dna: dict, cues: li
     write_wav(raw, out / max(1.0, np.abs(out).max()))
     final = work / "mix.wav"
     m = loudnorm(raw, final)
+    # second deliverable: voice + SFX only → add a TRENDING Instagram audio in-app at ~10–15 % volume
+    nm = np.stack([vx, vx], 1) * 0.92 + fx * 0.85
+    write_wav(work / "mix_nomusic_raw.wav", nm / max(1.0, np.abs(nm).max()))
+    loudnorm(work / "mix_nomusic_raw.wav", work / "mix_nomusic.wav")
     stems = {"music_rms_db_no_voice": float(20 * np.log10(np.sqrt(np.mean((mus * g_music)[duck < 0.2] ** 2)) + 1e-9)) if (duck < 0.2).any() else None,
              "music_rms_db": float(20 * np.log10(np.sqrt(np.mean((mus * g_music) ** 2)) + 1e-9)),
              "sfx_count": len(cues), "music_source": music_src, "loudnorm_in": {k: m[k] for k in ("input_i", "input_tp")}}

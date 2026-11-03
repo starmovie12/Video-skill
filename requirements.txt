@@ -3,6 +3,8 @@ numpy==2.5.4
 pillow==13.0.0        # wheels include FreeType + RAQM (Devanagari shaping)
 edge-tts==7.3.1       # default voice: free, exact word timings (needs internet)
 fonttools==4.68.0     # glyph-coverage fallback (₹, Devanagari)
+# optional — own-voice / any-TTS word alignment:
+# faster-whisper==1.2.1
 # optional offline voice:
 # kokoro-onnx==0.6.1 soundfile==0.14.0   (+ model files, see SKILL.md)
 # system: ffmpeg + ffprobe (apt install ffmpeg | pkg install ffmpeg)

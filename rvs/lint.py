@@ -12,7 +12,7 @@ NEEDS = {"pros_cons": ("pros", "cons"), "cast": ("cast",), "rating": ("rating",)
 WPS = 2.55  # MEASURED: hi-IN-MadhurNeural at +18 % ≈ 2.55 spoken tokens / s incl. pauses (Caligari sample, 103 tokens / 40.4 s)
 
 
-def lint(p: dict):
+def lint(p: dict, root=None):
     errs, warns = [], []
     beats = p.get("beats") or []
     if not beats:
@@ -32,6 +32,15 @@ def lint(p: dict):
         data = b.get("data") or {}
         if need and not any(data.get(k) not in (None, "", []) for k in need) and role not in ("fact",):
             errs.append(f"{bid}: role '{role}' needs data.{' or data.'.join(need)} (prevents empty cards)")
+    for i, b in enumerate(beats):  # media references must exist (the Director picks them from media_sheet.jpg)
+        refs = b.get("media")
+        for r in (refs if isinstance(refs, list) else [refs] if refs and refs not in ("auto", "none") else []):
+            f = str(r).split("#")[0].split("@")[0]
+            if root is not None and not (root / f).exists():
+                errs.append(f"{b.get('id', i)}: media '{f}' not found (run `media scan` and copy a label from media_sheet.jpg)")
+        for c in (b.get("data") or {}).get("cast", []) or []:
+            if c.get("image") and root is not None and not (root / c["image"]).exists():
+                errs.append(f"{b.get('id', i)}: cast image '{c['image']}' not found")
     first = beats[0]
     if first.get("role") != "hook":
         errs.append("first beat must have role 'hook' (designed pattern-interrupt)")

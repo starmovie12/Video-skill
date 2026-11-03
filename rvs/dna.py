@@ -24,10 +24,11 @@ BACKGROUNDS = ("poster_ambilight", "poster_duotone", "halftone", "mesh", "spotli
 POSTER_BG = {"poster_ambilight", "poster_duotone", "halftone", "poster_mosaic"}
 MOTIFS = ("film_perfs", "brackets", "slashes", "circles", "light_rays", "scanlines", "dust", "stamps", "thin_frames", "sparkles",
           "grid_dots", "tape")
-CAPTION_STYLES = ("pill", "pop_color", "box_line", "highlighter", "glow", "outline_bold", "underline")
+CAPTION_STYLES = ("viral", "viral_box", "pill", "pop_color", "box_line", "highlighter", "glow", "outline_bold", "underline")
+VIRAL_BOOST = {"viral": 3.5, "viral_box": 2.0}  # the proven Reels caption looks get a strong prior in every profile
 OPENINGS = ("word_smash", "poster_punch", "rating_first", "question_flash", "split_reveal", "countdown")
 SHAPES = ("rounded", "sharp", "cut", "pill", "ticket")
-MUSIC = ("epic_trailer", "dark_pulse", "upbeat_pop", "lofi_soft", "synthwave", "ambient_luxe", "hype_trap", "playful_pluck")
+MUSIC = ("epic_trailer", "dark_pulse", "upbeat_pop", "lofi_soft", "synthwave", "ambient_luxe", "hype_trap", "playful_pluck", "phonk")
 
 # Profiles: weights per dimension value. Genre profiles (movies) and category profiles (non-movie).
 P = {
@@ -41,13 +42,13 @@ P = {
                       background={"poster_duotone": 3, "spotlight": 2, "poster_ambilight": 3, "grid_tech": 1, "split_tone": 1},
                       motif={"brackets": 3, "scanlines": 2, "slashes": 2, "thin_frames": 2},
                       transitions={"whip": 3, "glitch": 2, "flash": 2, "shutter": 2, "split": 2, "zoom_through": 1},
-                      music={"dark_pulse": 5, "epic_trailer": 2}, caption_style={"box_line": 3, "pill": 2, "underline": 2, "outline_bold": 1},
+                      music={"phonk": 2, "dark_pulse": 5, "epic_trailer": 2}, caption_style={"box_line": 3, "pill": 2, "underline": 2, "outline_bold": 1},
                       opening={"question_flash": 3, "word_smash": 3, "split_reveal": 2, "poster_punch": 2}),
     "action":    dict(tone={"dark": 5, "mid": 1}, vibes=["action", "condensed", "bold", "cinematic", "poster"], motion={"heavy": 4, "snappy": 3},
                       background={"poster_ambilight": 3, "poster_duotone": 2, "split_tone": 2, "spotlight": 1, "poster_mosaic": 2},
                       motif={"slashes": 4, "light_rays": 2, "film_perfs": 1, "dust": 2},
                       transitions={"whip": 4, "zoom_through": 4, "stripes": 2, "flash": 2, "spin": 2},
-                      music={"epic_trailer": 5, "hype_trap": 2}, caption_style={"pill": 3, "pop_color": 3, "outline_bold": 2},
+                      music={"phonk": 3, "epic_trailer": 5, "hype_trap": 2}, caption_style={"pill": 3, "pop_color": 3, "outline_bold": 2},
                       opening={"word_smash": 4, "poster_punch": 3, "rating_first": 2, "countdown": 1}),
     "scifi":     dict(tone={"dark": 6}, vibes=["scifi", "tech", "future", "modern"], motion={"snappy": 3, "glitchy": 2, "smooth": 1},
                       background={"grid_tech": 4, "poster_duotone": 2, "bokeh_night": 2, "poster_ambilight": 2},
@@ -77,7 +78,7 @@ P = {
                       background={"halftone": 3, "spotlight": 3, "poster_duotone": 2, "paper": 1},
                       motif={"tape": 2, "stamps": 3, "brackets": 2, "dust": 2},
                       transitions={"shutter": 3, "flash": 2, "diag_wipe": 2, "glitch": 1, "whip": 2},
-                      music={"dark_pulse": 5}, caption_style={"box_line": 3, "highlighter": 2, "outline_bold": 2},
+                      music={"phonk": 2, "dark_pulse": 5}, caption_style={"box_line": 3, "highlighter": 2, "outline_bold": 2},
                       opening={"question_flash": 3, "word_smash": 2, "poster_punch": 2}),
     "fantasy":   dict(tone={"dark": 5}, vibes=["epic", "fantasy", "history", "cinematic", "luxury"], motion={"smooth": 3, "heavy": 2},
                       background={"poster_ambilight": 4, "bokeh_night": 2, "spotlight": 2, "poster_duotone": 1},
@@ -108,7 +109,7 @@ P = {
                       background={"grid_tech": 3, "mesh": 2, "spotlight": 2, "split_tone": 3, "halftone": 1},
                       motif={"grid_dots": 3, "brackets": 3, "circles": 2, "slashes": 2},
                       transitions={"whip": 3, "zoom_through": 2, "stripes": 3, "slide_push": 2, "glitch": 1},
-                      music={"hype_trap": 3, "upbeat_pop": 3, "synthwave": 2}, caption_style={"pill": 3, "pop_color": 3, "box_line": 2},
+                      music={"phonk": 2, "hype_trap": 3, "upbeat_pop": 3, "synthwave": 2}, caption_style={"pill": 3, "pop_color": 3, "box_line": 2},
                       opening={"question_flash": 4, "countdown": 2, "word_smash": 3}),
     "story":     dict(tone={"dark": 4, "light": 2}, vibes=["story", "editorial", "handmade", "vintage", "drama"], motion={"smooth": 4, "heavy": 1},
                       background={"paper": 3, "spotlight": 2, "bokeh_night": 2, "halftone": 2, "mesh": 1},
@@ -126,7 +127,7 @@ P = {
                       background={"grid_tech": 3, "bokeh_night": 2, "poster_ambilight": 2, "split_tone": 2, "poster_duotone": 1},
                       motif={"scanlines": 3, "slashes": 3, "grid_dots": 2, "brackets": 2},
                       transitions={"glitch": 4, "zoom_through": 3, "whip": 2, "stripes": 2},
-                      music={"hype_trap": 4, "synthwave": 4}, caption_style={"pop_color": 3, "glow": 3, "pill": 2},
+                      music={"phonk": 4, "hype_trap": 4, "synthwave": 4}, caption_style={"pop_color": 3, "glow": 3, "pill": 2},
                       opening={"countdown": 3, "word_smash": 3, "rating_first": 2}),
 }
 GENRE_ALIASES = {"sci-fi": "scifi", "science fiction": "scifi", "horror": "horror", "thriller": "thriller", "mystery": "crime",
@@ -137,7 +138,15 @@ GENRE_ALIASES = {"sci-fi": "scifi", "science fiction": "scifi", "horror": "horro
 
 
 def profile_for(category: str, genres: list[str]) -> dict:
-    """Blend the profiles of the film's genres (movies) or take the category profile."""
+    """Blend the profiles of the film's genres (movies) or take the category profile; viral caption styles get a strong prior."""
+    prof = _profile_for(category, genres)
+    cs = dict(prof.get("caption_style", {}))
+    for k, v in VIRAL_BOOST.items():
+        cs[k] = cs.get(k, 0) + (v * 0.5 if category in ("product", "story") else v)
+    return dict(prof, caption_style=cs)
+
+
+def _profile_for(category: str, genres: list[str]) -> dict:
     if category != "movie_review":
         return P.get(category, P["facts"])
     keys = [GENRE_ALIASES.get(g.lower().strip(), None) for g in genres or []]
@@ -318,13 +327,16 @@ def generate(project: dict, poster: Image.Image | None, seed_extra: str = "") ->
         "camera": over.get("camera", m.wchoice({"dynamic": 3, "calm": 1} if dna["motion"] != "smooth" else {"calm": 3, "dynamic": 1})),
         "grade": {"contrast": round(m.uniform(1.0, 1.1), 3), "saturation": round(m.uniform(0.95, 1.18) if dna["tone"] != "light" else m.uniform(0.9, 1.05), 3),
                   "vignette": round(m.uniform(0.25, 0.6) if dna["tone"] == "dark" else m.uniform(0.0, 0.2), 2), "grain": m.choice([4, 5, 6, 7])},
-        "bpm": None, "music_key": m.choice(["C", "D", "E", "F", "G", "A", "Bb"]),
+        "music_key": m.choice(["C", "D", "E", "F", "G", "A", "Bb"]),
+        "sticker_rate": over.get("sticker_rate", round({"story": 0.35, "product": 0.5}.get(cat, 0.65) * m.uniform(0.8, 1.2), 2)),
         "variants": {},
         "palette_source": "poster" if poster_cols else "generated",
     })
     for k, v in over.items():
         if k not in ("fonts", "transitions"):
             dna[k] = v
+    from .audio import mood_bpm
+    dna["bpm"] = over.get("bpm") or mood_bpm(dna["music_mood"], seed % 100000)
     sig = dna_signature(dna)
     dna["novelty_vs_last"] = [diff_count(sig, h) for h in history[:5]]
     dna["dna_sig"] = sig

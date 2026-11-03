@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 import re
+from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 
@@ -39,6 +40,7 @@ class Ctx:
         self.beat, self.data, self.words, self.dur, self.idx, self.n = beat, beat.get("data", {}) or {}, words, dur, idx, n_scenes
         self.assets, self.facts = assets, facts
         self.poster = assets.get("poster")
+        self.footage = (assets.get("media_segments") or {}).get(idx)
         self.rng = Rng(stable_seed(dna["seed"], idx, beat.get("id", "")))
         self.dark = dna["tone"] != "light"
         self.hero_set = {_norm(h) for hw in beat.get("hero", []) for h in hw.split()}
@@ -72,7 +74,7 @@ class Ctx:
     def hero(self, text, box, color=None, max_lines=3, min_px=56, max_px=380, case=None, stroke=None, glow=False, role="hero",
              highlight=None, gradient=None, align=None, fid=None, px=None):
         fid = fid or self.F["hero"]
-        st = stroke if stroke is not None else 0.0
+        st = stroke if stroke is not None else (0.035 if self.footage else 0.0)  # outline keeps type readable on busy footage
         return text_sprite(text, fid, px, deva_fid=self.F["deva"], color=color or self.pal["text"], box=box, max_lines=max_lines,
                            min_px=min_px, max_px=max_px, align=align or ("left" if self.align == "left" else "center"),
                            case=case or self.case, stroke=st, stroke_color=self.pal["bg0"], shadow=self.shadow(),
@@ -83,7 +85,8 @@ class Ctx:
              fid=None):
         return text_sprite(text, fid or self.F["support"], px, deva_fid=self.F["deva"], color=color or self.pal["text"], box=box,
                            max_lines=max_lines, min_px=min_px, max_px=max_px, align=align or ("left" if self.align == "left" else "center"),
-                           case=case, shadow=self.shadow(0.6), role=role)
+                           case=case, shadow=self.shadow(1.0 if self.footage else 0.6), role=role,
+                           stroke=0.03 if self.footage else 0.0, stroke_color="#000000")
 
     def chip(self, text, fill=None, color=None, px=42, shape=None, pad=(30, 14), border=None, role="label", fid=None, case="upper"):
         t = text_sprite(text, fid or self.F["support"], px, deva_fid=self.F["deva"], color=color or self.pal["ink"], box=(2000, 400),
@@ -131,6 +134,9 @@ class Ctx:
 
 # ───────────────────────── backgrounds ─────────────────────────
 def make_bg(ctx: Ctx, kind=None, variant_seed=0) -> Background:
+    if ctx.footage:  # footage-first: real visuals under the graphics whenever the beat has media
+        from .media import build_background
+        return build_background(ctx.footage, ctx.assets["root"], ctx.dna, dark=True)
     if kind is None:
         kind = ctx.dna["background"] if ctx.idx % 3 != 1 else ctx.dna.get("background2", ctx.dna["background"])
     if not ctx.dark and kind in ("grid_tech", "bokeh_night", "spotlight"):
@@ -373,12 +379,12 @@ def kinetic_stack(ctx: Ctx, sc, words, box, *, hero_set=None, max_words_page=7, 
             px = min(px, 330 if is_h else 230, (bh / max(1, len(lines))) / 1.05)
             line_px.append(max(58, px))
         total = sum(p * 1.04 for p in line_px)
-        if total > bh:
+        if total > bh:  # shrink the whole stack until it fits its box (never spill out of the safe area)
             k = bh / total
-            line_px = [max(52, p * k) for p in line_px]
+            line_px = [max(40, p * k) for p in line_px]
             total = sum(p * 1.04 for p in line_px)
         y = y0 + (bh - total) / 2 if ctx.align != "left" else y0 + (bh - total) * 0.35
-        t_page_end = (pages[pi + 1][0]["t0"] - 0.08) if pi + 1 < len(pages) else None
+        t_page_end = (pages[pi + 1][0]["t0"] - 0.16) if pi + 1 < len(pages) else None
         for li, ln in enumerate(lines):
             px = int(line_px[li])
             sprs = []
@@ -387,7 +393,8 @@ def kinetic_stack(ctx: Ctx, sc, words, box, *, hero_set=None, max_words_page=7, 
                 is_h = _norm(w["show"]) in hero_set or _norm(w.get("say")) in hero_set
                 col = (colors or {}).get("hero" if is_h else "word") or (ctx.pal["accent"] if is_h else ctx.pal["text"])
                 sp = text_sprite(texts[j], fid, px, deva_fid=ctx.F["deva"], color=col, box=(4000, 2000), max_lines=1,
-                                 shadow=ctx.shadow(1.2), stroke=0.0, role="hero" if is_h else "kinetic",
+                                 shadow=ctx.shadow(1.2), stroke=0.04 if ctx.footage else 0.0, stroke_color="#000000",
+                                 role="hero" if is_h else "kinetic",
                                  glow=(16, 0.45, ctx.pal["accent"]) if (is_h and ctx.dna["caption_style"] == "glow") else None)
                 sprs.append((sp, is_h, w))
             pads = [s.meta["pad"] for s, _, _ in sprs]
@@ -399,7 +406,7 @@ def kinetic_stack(ctx: Ctx, sc, words, box, *, hero_set=None, max_words_page=7, 
                 t_in = max(0.0, w["t0"] - 0.06 + t_offset)
                 ly = ctx.layer(sp, x + wd / 2, y + px * 0.52, z=1.0, t_in=t_in, t_out=t_page_end,
                                enter=("slam" if ctx.motion in ("heavy", "snappy") else "pop") if is_h else ctx.enter("minor") if ctx.motion != "smooth" else "rise",
-                               exit="pop_out", role="hero" if is_h else "kinetic", idle="breathe" if is_h else "none")
+                               exit="pop_out", exit_dur=0.12, role="hero" if is_h else "kinetic", idle="breathe" if is_h else "none")
                 sc.add(ly)
                 out_layers.append(ly)
                 if is_h:
@@ -470,6 +477,7 @@ def hook_slam(ctx: Ctx, sc):
             sc.add(ctx.layer(s, W / 2, 900, z=1.0, t_in=0.0 + i * 0.16, t_out=0.13 + i * 0.16, enter="slam", exit="fade", exit_dur=0.03, role="deco"))
             sc.cue(i * 0.16, "tick", 0.9)
         words = [dict(w, t0=max(w["t0"], 0.5)) for w in words]
+        box = (SAFE["left"] + 10, 420, SAFE["right_top"] - 10, SAFE["bottom"] - 60)
     else:  # word_smash: lightning flash + streak
         streak = Image.new("RGBA", (W * 2, 26), rgba(p["accent"], 230))
         sc.add(Layer(Sprite(streak.rotate(-12, expand=True), 0.5, 0.5), W / 2, 560, z=0.6, t_in=0.0, t_out=0.35, enter="slide",
@@ -610,9 +618,10 @@ def rating_meter(ctx: Ctx, sc):
         star_y = cy + 390
     else:  # giant number with fill rising inside an outline
         txt = f"{rating:g}"
-        outline = text_sprite(txt, ctx.F["hero"], 520, color="#00000000", box=(3000, 3000), max_lines=1, stroke=0.02, stroke_color=p["accent"],
+        gpx = text_sprite(txt, ctx.F["hero"], None, box=(860, 520), max_lines=1, max_px=520, min_px=200, role="hero").meta["px"]
+        outline = text_sprite(txt, ctx.F["hero"], gpx, color="#00000000", box=(3000, 3000), max_lines=1, stroke=0.02, stroke_color=p["accent"],
                               role="hero")
-        filled = text_sprite(txt, ctx.F["hero"], 520, color=p["accent"], box=(3000, 3000), max_lines=1, role="hero", glow=(20, 0.4, p["accent"]))
+        filled = text_sprite(txt, ctx.F["hero"], gpx, color=p["accent"], box=(3000, 3000), max_lines=1, role="hero", glow=(20, 0.4, p["accent"]))
         sc.add(ctx.layer(outline, W / 2, cy - 40, z=1.0, t_in=t0 - 0.2, enter="fade", role="deco"))
         sc.add(ctx.layer(filled, W / 2, cy - 40, z=1.0, t_in=t0, enter="wipe", enter_dir=(0, -1), enter_dur=1.0, role="hero"))
         sub = text_sprite(f"OUT OF {out_of:g}", ctx.F["support"], 58, color=p["muted"], box=(3000, 3000), max_lines=1, role="label")
@@ -689,17 +698,20 @@ def story_panels(ctx: Ctx, sc):
     for i, (pt, ti) in enumerate(zip(pts, times)):
         yy = y0 + i * (ch + gap)
         c = glass(ctx, sc, W / 2 - 15 - cw / 2, yy, cw, ch)
-        x_text = 30
+        # left: thumbnail (poster crop) or a big number; right: the point, vertically centred over the full card height
+        side = ch - 36
+        num = text_sprite(f"{i + 1:02d}", ctx.F["hero"], int(side * (0.3 if ctx.poster is not None else 0.62)), color=p["accent"],
+                          box=(3000, 3000), max_lines=1, role="label", stroke=0.06 if ctx.poster is not None else 0.0, stroke_color="#000000")
         if ctx.poster is not None:
-            th = ctx.poster_crop(ctx.focus(i, 1.0), ch - 36, ch - 36).convert("RGBA")
-            th.putalpha(gfx.shape_mask(ch - 36, ch - 36, "rounded" if ctx.shape != "sharp" else "sharp", 20))
+            th = ctx.poster_crop(ctx.focus(i, 1.0), side, side).convert("RGBA")
+            th.putalpha(gfx.shape_mask(side, side, "rounded" if ctx.shape != "sharp" else "sharp", 20))
             c.alpha_composite(th, (18, 18))
-            x_text = ch + 6
-        num = text_sprite(f"{i + 1:02d}", ctx.F["hero"], int(ch * 0.34), color=p["accent"], box=(3000, 3000), max_lines=1, role="label")
-        c.alpha_composite(num.img, (x_text - num.meta["pad"], 14 - num.meta["pad"]))
-        t = ctx.body(pt, (cw - x_text - 40, ch - num.h + 2 * num.meta["pad"] - 30), max_lines=2, max_px=92, min_px=46, align="left",
-                     color=p["text"])
-        c.alpha_composite(t.img, (x_text - t.meta["pad"], int(14 + num.h - 2 * num.meta["pad"] + 6 - t.meta["pad"])))
+            c.alpha_composite(num.img, (18 + 8 - num.meta["pad"], 18 + side - num.h + num.meta["pad"] - 4))
+        else:
+            c.alpha_composite(num.img, (18 + side // 2 - num.w // 2, ch // 2 - num.h // 2))
+        x_text = side + 50
+        t = ctx.body(pt, (cw - x_text - 30, ch - 40), max_lines=2, max_px=96, min_px=44, align="left", color=p["text"])
+        c.alpha_composite(t.img, (x_text - t.meta["pad"], int(ch / 2 - t.h / 2)))
         sc.add(ctx.layer(Sprite(c, 0.5, 0.5, {"role": "body", "px": t.meta["px"], "text": pt, "pad": 0}), W / 2 - 15, yy + ch / 2, z=1.0,
                          t_in=ti, enter="slide", enter_dir=(-1 if i % 2 == 0 else 1, 0), role="body"))
         sc.cue(ti, "swish", 0.6)
@@ -716,6 +728,8 @@ def cast_spotlight(ctx: Ctx, sc):
     if not cast:
         cast = [{"name": w["show"], "role": ""} for w in ctx.words if _norm(w["show"]) in ctx.hero_set][:2] or [{"name": ctx.beat.get("show", "")[:24], "role": ""}]
     v = ctx.variant if ctx.variant in ("portraits", "lower_third", "big_name") else ctx.rng.choice(["portraits", "lower_third", "big_name"])
+    if v == "big_name" and any(c.get("image") or (c.get("focus") and ctx.poster is not None) for c in cast):
+        v = "portraits"  # real faces exist → show them
     sc.bg = make_bg(ctx, "spotlight" if ctx.dark else None)
     camera_for(ctx, sc, "push")
     times = [ctx.t_word(c["name"], f) for c, f in zip(cast, (0.05, 0.4, 0.68))]
@@ -725,7 +739,10 @@ def cast_spotlight(ctx: Ctx, sc):
         if c.get("focus") and ctx.poster is not None:
             fr = ctx.poster_crop(tuple(c["focus"]), size, size).convert("RGBA")
         elif c.get("image"):
-            fr = ImageOps.fit(Image.open(c["image"]).convert("RGB"), (size, size), Image.Resampling.LANCZOS).convert("RGBA")
+            src = Image.open(ctx.assets.get("root", Path(".")) / c["image"]).convert("RGB")
+            if c.get("image_focus"):  # crop THIS person's face from a still the Director looked at
+                src = gfx.crop_norm(src, c["image_focus"])
+            fr = ImageOps.fit(src, (size, size), Image.Resampling.LANCZOS, centering=(0.5, 0.4)).convert("RGBA")
         else:
             fr = gfx.radial_gradient(size, size, size * 0.35, size * 0.3, size, mix_hex(p["accent"], p["bg1"], 0.35), p["bg0"], 1.2).convert("RGBA")
             ini = "".join(x[0] for x in c["name"].split()[:2]).upper()
@@ -810,6 +827,8 @@ def pros_cons(ctx: Ctx, sc):
     items = [("+", t) for t in pros] + [("-", t) for t in cons]
     times = [ctx.t_word(t, f) for (_, t), f in zip(items, [0.04 + 0.85 * i / max(1, len(items)) for i in range(len(items))])]
     top, bot = ctx.top, ctx.bottom
+    if v == "balance" and max(len(t) for _, t in items) > 18:
+        v = "cards"  # long points don't fit on a balance beam → readable cards instead
     if v == "balance" and pros and cons:
         cx, cy = W / 2, (top + bot) / 2 + 60
         beam = gfx.card(880, 24, fill=p["text"], kind="pill")
@@ -837,8 +856,15 @@ def pros_cons(ctx: Ctx, sc):
         counts = {"+": 0, "-": 0}
         for (kind, txt), ti in zip(items, times):
             good = kind == "+"
-            ch = ctx.chip(txt, fill=p["good"] if good else p["bad"], color="#FFFFFF" if (not good or ctx.dark) else p["ink"], px=44, case="any", role="body")
+            px_ = 44
+            while True:
+                ch = ctx.chip(txt, fill=p["good"] if good else p["bad"], color="#FFFFFF" if (not good or ctx.dark) else p["ink"], px=px_,
+                              case="any", role="body")
+                if ch.w <= 430 or px_ <= 32:
+                    break
+                px_ -= 3
             x = cx - 230 if good else cx + 230
+            x = clamp(x, SAFE["left"] + ch.w / 2, SAFE["right_low"] - ch.w / 2)
             y = cy - 70 - counts[kind] * (ch.h + 16)
             counts[kind] += 1
             sc.add(ctx.layer(ch, x, y, z=1.0, t_in=ti, enter="drop", role="body"))
@@ -1344,3 +1370,79 @@ ROLE_DEFAULTS = {"hook": "hook_slam", "intro": "poster_hero", "title": "poster_h
                  "stat": "stat_counter", "list": "list_reveal", "compare": "split_compare", "fact": "fact_bomb", "timeline": "timeline",
                  "product": "product_hero", "price": "price_tag", "features": "feature_callouts", "chapter": "chapter_title",
                  "line": "kinetic_line"}
+
+
+# ───────────────────────── editing polish: stickers, light leaks, cut flashes ─────────────────────────
+def add_stickers(ctx: Ctx, sc):
+    """Pop a 3D emoji sticker on the word it illustrates (Director override: beat.sticker = name | 'none')."""
+    from . import stickers as ST
+    want = ctx.beat.get("sticker")
+    if want == "none":
+        return
+    if want:
+        hit = (want, ctx.t_word(" ".join(ctx.beat.get("hero", [])) or None, 0.15))
+    else:
+        if ctx.rng.random() > ctx.dna.get("sticker_rate", 0.6):
+            return
+        hit = ST.match(ctx.words, ctx.hero_set)
+    if not hit:
+        return
+    name, t = hit
+    size = 230 if ctx.beat.get("role") != "hook" else 270
+    im = ST.load(name, size)
+    if im is None:
+        return
+    spr = Sprite(gfx.with_shadow(im, 14, 0.45, 12), 0.5, 0.5, {"role": "sticker", "text": name})
+    t_in = max(0.05, t - 0.05)
+    # pick the first free spot (no overlap with any text block at that moment)
+    boxes = []
+    for ly in sc.layers:
+        if getattr(ly, "role", "") in ("hero", "body", "label", "kinetic", "image") and isinstance(ly, Layer):
+            b = ly.rest_box(min(ctx.dur - 0.05, t_in + 0.6))
+            if b:
+                boxes.append(b)
+    half = size / 2 + 10
+    L, R = SAFE["left"] + half, SAFE["right_low"] - half + 30
+    spots = [(R, ctx.top + half), (L, ctx.top + half), (R, (ctx.top + ctx.bottom) / 2), (L, (ctx.top + ctx.bottom) / 2),
+             (R, ctx.bottom - half), (L, ctx.bottom - half)]
+    if ctx.idx % 2:
+        spots = [spots[i ^ 1] for i in range(len(spots))]
+    x, y = spots[0]
+    for (cx_, cy_) in spots:
+        if not any(cx_ + half > b[0] and cx_ - half < b[2] and cy_ + half > b[1] and cy_ - half < b[3] for b in boxes):
+            x, y = cx_, cy_
+            break
+    else:
+        return  # no free spot → no sticker (never cover text)
+    left = x < W / 2
+    sc.add(ctx.layer(spr, x, y, z=1.15, t_in=t_in, t_out=min(ctx.dur - 0.05, t_in + 2.4), enter="pop", exit="pop_out",
+                     motion="elastic", idle="float", idle_amp=1.6, rot=-8 if left else 8, role="sticker"))
+    sc.cue(t_in, "pop", 0.75)
+
+
+def _leak_sprite(color, seed):
+    import numpy as np
+    w, h = int(W * 1.3), int(H * 0.9)
+    r = Rng(seed)
+    yy, xx = np.mgrid[0:h // 4, 0:w // 4].astype(np.float32)
+    a = np.zeros_like(xx)
+    for _ in range(3):
+        cx, cy, s = r.uniform(0, w / 4), r.uniform(0, h / 4), r.uniform(40, 90)
+        a += np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * s * s))
+    a = np.clip(a / a.max(), 0, 1) ** 1.4 * 0.55
+    m = Image.fromarray((a * 255).astype("uint8")).resize((w, h), Image.Resampling.BICUBIC)
+    out = Image.new("RGBA", (w, h), rgba(color, 0))
+    out.putalpha(m)
+    return Sprite(out, 0.5, 0.5)
+
+
+def add_grade_fx(ctx: Ctx, sc):
+    """On footage cuts: a 2-frame flash + a warm light-leak sweep (film-trailer energy)."""
+    warm = mix_hex(ctx.pal["accent"], "#FF8A3D", 0.5)
+    for k, tc in enumerate(sc.bg.cut_times()):
+        fl = Image.new("RGBA", (W, H), (255, 255, 255, 150))
+        sc.add(Layer(Sprite(fl, 0.5, 0.5), W / 2, H / 2, z=1.3, t_in=tc, t_out=tc + 0.03, exit_dur=0.1, enter="none", role="deco"))
+        if ctx.rng.random() < 0.6:
+            lk = _leak_sprite(warm, ctx.dna["seed"] + ctx.idx * 7 + k)
+            sc.add(Layer(lk, W * 0.2, H * 0.4, z=1.25, t_in=tc - 0.05, t_out=tc + 0.45, exit_dur=0.3, enter="slide", enter_dir=(-1, 0),
+                         travel=900, motion="smooth", role="deco"))

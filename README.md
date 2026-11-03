@@ -21,7 +21,7 @@ v1 ki sab cheezein bani hain: Style DNA (har video alag), Variety Ledger, 19 sce
 
 Ye skill ab **ek hi channel** ke liye set hai: **Scene Samjho**, Instagram [@scene.samjho1](https://instagram.com/scene.samjho1), Bollywood + OTT ka DECODE Hindi me.
 
-- **Repo me kya hai:** `channel/channel.json` me channel ka naam, niche, pillars, roz ka schedule (post 7:30 PM IST) aur reel rules hain. `CLAUDE.md` har nayi chat me apne aap padha jaata hai.
+- **Repo me kya hai:** `channel/channel.json` me channel ka naam, niche, pillars, roz ka schedule (**2 reels: 1:00 PM + 7:30 PM IST**, 3 stories) aur reel rules hain. `CLAUDE.md` har nayi chat me apne aap padha jaata hai.
 - **`python run.py channel`:** aaj aur kal ka pillar, posting time, rules, aur pichhle topics (repeat nahi karne).
 - **Har naya project:** apne aap 50 s reel, viral captions, end card par @scene.samjho1. Lint/QA 90 s se lamba reel rokte hain. Upload pack me posting time aur `#SceneSamjho` ke saath max 5 hashtags.
 - **Flow:** research → script MD (operator ko dikhao) → **"continue"** → video → `python run.py log <project> --status made/posted` → `channel/` commit.

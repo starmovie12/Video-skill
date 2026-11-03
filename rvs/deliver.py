@@ -86,10 +86,16 @@ def upload_pack(project: dict, tl, qa: dict, out: Path, root: Path, cover: dict)
     music = qa.get("mix", {}).get("music_source", "")
     ch_lines = []
     if ch:
+        from .channel import post_times, slot_time
+        import datetime as dt
         sch = ch.get("schedule", {})
+        mine = slot_time(project, ch)
+        when = (f"**{mine} IST** ({project.get('slot') or 'post_at'})" if mine
+                else "slots today: " + ", ".join(post_times(dt.date.today(), ch)) + " IST — set `slot` (reel_1 / reel_2) in project.json")
+        stories = "; ".join(f"{s.get('time')} {s.get('what')}" if isinstance(s, dict) else str(s) for s in sch.get("stories", []))
         ch_lines = ["## Channel", f"- **{ch.get('name')}** ({ch.get('handle')}) · {ch.get('platform')} · {ch.get('account_type')} account",
-                    f"- Post at **{sch.get('post_main')} IST** (second slot {sch.get('post_second')} from {sch.get('post_second_from')}) · "
-                    f"stories: {'; '.join(sch.get('stories', []))}",
+                    f"- Post at {when}",
+                    f"- Stories ({sch.get('stories_per_day', '')}/day): {stories}",
                     f"- Stay online {sch.get('reply_window_min', 60)} min after posting and reply to every comment",
                     f"- Then: `python run.py log <project> --status posted`, and after 24 h add Insights numbers "
                     f"(--views --skip-rate --avg-watch --sends --follows)", ""]

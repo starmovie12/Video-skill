@@ -9,7 +9,7 @@
 |---|---|
 | Name | **Scene Samjho** |
 | Instagram | **@scene.samjho1**: Creator account (full music library), category "Reel creator" |
-| Bio | 🎬 Trailer, gaane, box office: DECODE in Hindi \| 🔍 Har scene ka asli matlab \| 🕖 Roz shaam 7:30 baje naya reel |
+| Bio | 🎬 Trailer, gaane, box office: DECODE in Hindi \| 🔍 Har scene ka asli matlab \| 🕐 Roz 2 reels: 1 PM & 7:30 PM |
 | Niche | Bollywood + OTT **DECODE** in Hindi. Never mix in other niches (AI tips, call recordings, reposts) |
 | Audience | Hindi-speaking movie fans in India, 16–35, on phones, often with sound off |
 | Language | Hindi voice-over (written in Devanagari for TTS) + Roman Hinglish captions |
@@ -29,17 +29,42 @@
 
 **Trend override:** if a big trailer, teaser, song, release or box-office headline broke in the last 24 h, drop the pillar and decode that, the same day.
 
-## Schedule (IST)
+## Schedule (IST): 2 reels + 3 Stories every day (from 4 Nov 2026)
+
+| Slot | Mon–Fri | Sat–Sun | Topic |
+|---|---|---|---|
+| **reel_1** | **13:00** | 12:30 | The time-sensitive topic (release tomorrow, trailer just out, box-office headline), so it has more hours to spread |
+| **reel_2** | **19:30** | 20:30 | Prime time: the day's pillar or the strongest topic |
+
+**Slot rules:**
+- Two different topics a day. Never two reels on the same film the same day.
+- Set `"slot": "reel_1"` or `"reel_2"` in project.json. The upload pack then prints the exact time.
+
+**Stories (3 a day, a 4th optional):**
+
+| Time | Story |
+|---|---|
+| 09:00 | Poll / quiz about today's two topics ("Aaj Ramayana ya Eetha?") |
+| 13:15 | Share reel 1 with a "NEW REEL" sticker |
+| 19:45 | Share reel 2 |
+| 21:30 | Optional: poll result, question box, or tomorrow's teaser |
+
+**Day plan:**
 
 | Time | What |
 |---|---|
-| 09:00 | Research the topic (Prompt A) · Story poll about it |
-| 10:00 | Script MD to the operator. **Wait for "continue"** |
-| 11:00 | proof → look at the frames → make → QA PASS → review → deliver |
-| 13:00 | Second reel (only from 17 Nov, and only if quality holds) |
-| **19:30** | **Main reel goes live** · share to Story at 21:00 |
-| 19:30–20:30 | Reply to every comment |
-| +24 h | `run.py log … --status posted --views … --skip-rate … --avg-watch … --sends … --follows …` |
+| 09:00 | Research both topics (last 24–48 h) · morning Story |
+| 09:30 | Script MD for reel 1 → operator → **wait for "continue"** |
+| 10:00 | Make reel 1 (proof → make → QA → deliver) · script MD for reel 2 |
+| 13:00 | Reel 1 live · reply to comments till 14:00 |
+| 15:00 | Make reel 2 after "continue" |
+| 19:30 | Reel 2 live · reply to comments till 20:30 |
+| +24 h | `run.py log … --slot reel_1/reel_2 --status posted --views … --skip-rate … --avg-watch … --sends … --follows …` |
+
+Timing sources:
+- Third-party India data puts weekday evenings (7–9 PM) strongest and 11 AM–2 PM second.
+- One source suggests 2–3 Stories a day; Mosseri reportedly advises "a couple of Stories per day".
+- After 2 weeks, check Insights → "Most active times" and move the slots if needed.
 
 ## Reel rules (and why)
 

@@ -1,4 +1,4 @@
-> **Status (3 Nov 2026):** final name **Scene Samjho** (@scene.samjho1). Creator account, Account Status all green, bio set, old posts archived. The engine reads the rules from `channel/channel.json`; this file is the reasoning with sources.
+> **Status (3 Nov 2026):** final name **Scene Samjho** (@scene.samjho1). Creator account, Account Status all green, bio set, old posts archived. **From 4 Nov: 2 reels a day (13:00 + 19:30 IST) and 3 Stories (09:00, 13:15, 19:45)**, which replaces section 6 below. The engine reads the rules from `channel/channel.json`; this file is the reasoning with sources.
 
 # Instagram Growth Plan: 30 din (4 Nov – 3 Dec 2026)
 

@@ -277,7 +277,8 @@ def test_qa_lists_every_static_run():
 def _channel_dir(tmp_path, monkeypatch):
     ch = {"name": "Test Channel", "handle": "@test.ch", "platform": "instagram", "account_type": "creator",
           "weekly_rhythm": {"mon": "numbers", "tue": "decode", "wed": "facts", "thu": "decode", "fri": "this_week", "sat": "theory", "sun": "facts"},
-          "schedule": {"post_main": "19:30", "post_second": "13:00", "post_second_from": "2099-01-01", "stories": []},
+          "schedule": {"posts": [{"slot": "reel_1", "weekday": "13:00", "weekend": "12:30"},
+                                 {"slot": "reel_2", "weekday": "19:30", "weekend": "20:30"}], "stories_per_day": 3, "stories": []},
           "reel_rules": {"target_sec": 50, "max_sec": 60, "hard_max_sec": 90, "hook_max_words": 16, "script_words": [110, 160],
                          "send_cta_words": ["bhejo"], "hashtags_max": 5, "base_hashtags": ["#TestCh"]},
           "defaults": {"category": "movie_review", "format": "reel", "target_sec": 50, "caption_script": "roman",
@@ -320,4 +321,7 @@ def test_channel_log_and_brief(tmp_path, monkeypatch):
     assert len(rows) == 1 and rows[0]["status"] == "posted" and rows[0]["views"] == 1234 and rows[0]["topic"] == "Ramayana facts"
     b = C.brief(dt.date(2026, 11, 4))
     assert "wed" in b["today"] and "facts" in b["today"] and "decode" in b["tomorrow"]
-    assert b["post_at_ist"] == ["19:30"] and "Ramayana facts" in b["recent_topics_do_not_repeat"][0]
+    assert b["reels_today_ist"] == ["reel_1 13:00", "reel_2 19:30"] and "Ramayana facts" in b["recent_topics_do_not_repeat"][0]
+    assert C.post_times(dt.date(2026, 11, 7), C.load()) == ["reel_1 12:30", "reel_2 20:30"]  # Saturday
+    assert C.slot_time({"slot": "reel_2"}, C.load(), dt.date(2026, 11, 4)) == "19:30"
+    assert C.slot_time({"slot": "reel_2", "post_at": "18:00"}, C.load()) == "18:00"

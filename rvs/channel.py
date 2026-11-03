@@ -134,6 +134,25 @@ def hashtags(project: dict, ch: dict | None, candidates: list[str]) -> list[str]
     return (base + own)[: r.get("hashtags_max", 5)]
 
 
+def post_times(day: dt.date, ch: dict) -> list[str]:
+    """Reel slots for that day, e.g. ['reel_1 13:00', 'reel_2 19:30'] (weekend times on Sat/Sun)."""
+    sch = ch.get("schedule", {})
+    key = "weekend" if day.weekday() >= 5 else "weekday"
+    return [f"{p.get('slot')} {p.get(key) or p.get('weekday')}" for p in sch.get("posts", [])]
+
+
+def slot_time(project: dict, ch: dict, day: dt.date | None = None) -> str | None:
+    """Posting time for this project: `post_at` wins, else its `slot` (reel_1 / reel_2) on that day."""
+    if project.get("post_at"):
+        return str(project["post_at"])
+    day = day or dt.date.today()
+    key = "weekend" if day.weekday() >= 5 else "weekday"
+    for p in ch.get("schedule", {}).get("posts", []):
+        if p.get("slot") == project.get("slot"):
+            return p.get(key) or p.get("weekday")
+    return None
+
+
 def brief(today: dt.date | None = None) -> dict:
     ch = load()
     if not ch:
@@ -141,7 +160,6 @@ def brief(today: dt.date | None = None) -> dict:
     today = today or dt.datetime.now(dt.timezone(dt.timedelta(hours=5, minutes=30))).date()
     tomorrow = today + dt.timedelta(days=1)
     sch = ch.get("schedule", {})
-    second = sch.get("post_second_from") and today.isoformat() >= sch["post_second_from"]
     recent = history(12)
     return {
         "channel": f"{ch.get('name')} ({ch.get('handle')}) · {ch.get('platform')} · {ch.get('account_type')} account",
@@ -149,8 +167,13 @@ def brief(today: dt.date | None = None) -> dict:
         "today": f"{today.isoformat()} ({DAYS[today.weekday()]}) → pillar: {pillar_for(today, ch)}",
         "tomorrow": f"{tomorrow.isoformat()} ({DAYS[tomorrow.weekday()]}) → pillar: {pillar_for(tomorrow, ch)}",
         "trend_override": ch.get("trend_override"),
-        "post_at_ist": [sch.get("post_main")] + ([sch.get("post_second")] if second else []),
+        "reels_today_ist": post_times(today, ch),
+        "reels_tomorrow_ist": post_times(tomorrow, ch),
+        "slots": sch.get("posts"),
+        "slot_rule": sch.get("slot_rule"),
+        "stories_per_day": sch.get("stories_per_day"),
         "stories": sch.get("stories"),
+        "day_plan": sch.get("day_plan"),
         "reel_rules": ch.get("reel_rules"),
         "workflow": ch.get("workflow"),
         "never": ch.get("never"),

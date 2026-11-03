@@ -27,7 +27,11 @@ Every script and video made here is for this channel. Its profile, schedule and 
   - one topic per reel
   - end with a send line ("ye us dost ko bhejo jo…") and a two-option question
 - **Upload:** cover always; ≤5 hashtags, `#SceneSamjho` first.
-- **Post** daily at **19:30 IST**. From 17 Nov 2026 add a second post at 13:00. Stories at 09:00 (poll) and 21:00 (share).
+- **Two reels a day, on two different topics.**
+  - Mon–Fri: **13:00** (reel_1, the time-sensitive topic) and **19:30 IST** (reel_2, prime time).
+  - Sat–Sun: 12:30 and 20:30.
+  - Set `"slot": "reel_1"` or `"reel_2"` in project.json.
+- **3 Stories a day:** 09:00 poll · 13:15 share reel 1 · 19:45 share reel 2. Optional 21:30 teaser or question box.
 - **Original content only:** voice-over + analysis + graphics.
   - No raw movie clips, no reposts.
   - Theories are called theories.

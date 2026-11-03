@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -26,8 +27,9 @@ def _paths(project_dir: str):
 
 
 def load_project(pj: Path) -> dict:
+    from .channel import apply_defaults
     from .lint import lint
-    p = json.loads(pj.read_text(encoding="utf-8"))
+    p = apply_defaults(json.loads(pj.read_text(encoding="utf-8")))  # the channel's defaults; project.json values win
     errs, warns = lint(p, pj.parent)
     for w in warns:
         log(f"lint WARN: {w}")
@@ -94,6 +96,8 @@ def cmd_proof(a):
     tl = build_timeline(p, root, voice, dna)
     write_json(work / "plan.json", tl.summary())
     times = key_times(tl)
+    for old in (work / "proof_frames").glob("*.png"):  # stale frames from an earlier proof would mislead the review / handover
+        old.unlink()
     frames = save_frames(tl, times, work / "proof_frames", "proof")
     contact_sheet(frames, work / "proof_contact_sheet.png", [f"{t:.1f}s" for t in times])
     sec = float(p.get("proof_sec", 6.0))
@@ -185,7 +189,7 @@ def cmd_deliver(a):
         raise RvsError("NO_REVIEW", "write work/review.md AFTER looking at the frames (honest self-review gate)")
     txt = rv.read_text(encoding="utf-8")
     sec = txt.split("## Weaknesses", 1)[-1].split("\n## ", 1)[0] if "## Weaknesses" in txt else ""
-    weak = [ln for ln in sec.splitlines() if ln.strip().startswith("- ")]
+    weak = [ln for ln in sec.splitlines() if re.match(r"\s*(?:[-*•]|\d+[.)])\s+\S", ln)]  # bullets or numbered points
     if len(weak) < 2:
         raise RvsError("REVIEW_SHALLOW", "review.md needs a '## Weaknesses' section with ≥2 honest bullet points")
     print(json.dumps({"deliver": rep["video"], "review": str(rv), "weaknesses_listed": len(weak)}, indent=1))
@@ -288,11 +292,59 @@ def cmd_doctor(a):
 
 
 def cmd_new(a):
+    from .channel import apply_defaults, load
     src = Path(__file__).resolve().parent.parent / "templates" / f"{a.category}.json"
     dst = Path(a.dir)
     dst.mkdir(parents=True, exist_ok=True)
-    shutil.copy(src, dst / "project.json")
-    print(f"created {dst / 'project.json'} — fill facts, script beats and assets")
+    p = json.loads(src.read_text(encoding="utf-8"))
+    ch = load()
+    if ch:
+        p.pop("target_sec", None)  # template lengths are generic; the channel decides
+        p = apply_defaults(p, ch)
+    write_json(dst / "project.json", p)
+    print(f"created {dst / 'project.json'} — fill facts, script beats and assets"
+          + (f" · channel defaults: {ch['name']} ({ch['handle']}), {p.get('target_sec')} s reel" if ch else ""))
+
+
+def cmd_handover(a):
+    """Prompt 3 (adapted): the reel handover PDF from the research brief, script pack and the engine's proof frames."""
+    from .deliver import make_cover
+    from .handover import build
+    root, pj, work, out = _paths(a.project)
+    p = load_project(pj)
+    try:  # cover preview with the real cover builder (cached voice + DNA; no render)
+        voice = stage_voice(p, work)
+        dna = stage_dna(p, root, work)
+        tl = build_timeline(p, root, voice, dna)
+        tmp = work / "cover_tmp"
+        cov = make_cover(tl, p, tmp)
+        shutil.copy(cov["cover"], work / "cover_preview.jpg")
+    except Exception as e:  # the PDF still builds from the hook frame
+        log(f"handover: cover preview skipped ({e})")
+    res = build(root, html_only=a.html_only)
+    res["next"] = ("OPEN every page (work/handover_pages/page-*.png or all_pages.png), fix what is cut or overflowing, then send the PDF "
+                   "and WAIT for 'continue' before `make`")
+    print(json.dumps(res, indent=1, ensure_ascii=False))
+
+
+def cmd_channel(a):
+    from .channel import brief
+    print(json.dumps(brief(), indent=1, ensure_ascii=False))
+
+
+def cmd_log(a):
+    from .channel import log as ch_log
+    root = Path(a.project).resolve()
+    p = json.loads((root / "project.json").read_text(encoding="utf-8")) if (root / "project.json").exists() else {}
+    q = read_json(root / "work" / "qa_report.json", {}) or {}
+    first = (p.get("beats") or [{}])[0]
+    entry = {"date": a.date or time.strftime("%Y-%m-%d"), "project": root.name, "topic": a.topic or p.get("title"),
+             "pillar": a.pillar or p.get("pillar"), "slot": a.slot or p.get("slot"), "hook": first.get("show") or first.get("say"),
+             "length_s": q.get("duration"), "status": a.status, "views": a.views, "skip_rate": a.skip_rate,
+             "avg_watch_s": a.avg_watch, "sends": a.sends, "follows": a.follows, "notes": a.note}
+    row = ch_log(entry)
+    print(json.dumps(row, indent=1, ensure_ascii=False))
+    print("now commit + push channel/ so the next chat remembers this video")
 
 
 def main(argv=None):
@@ -324,6 +376,26 @@ def main(argv=None):
     s.add_argument("query", nargs="?", default="")
     s.add_argument("--n", type=int, default=8)
     s.set_defaults(fn=cmd_media)
+    s = sub.add_parser("handover", help="reel handover PDF (research brief + script pack + real proof frames) for the operator to read")
+    s.add_argument("project")
+    s.add_argument("--html-only", dest="html_only", action="store_true")
+    s.set_defaults(fn=cmd_handover)
+    s = sub.add_parser("channel", help="channel brief: who we make videos for, today's pillar, schedule, rules, recent topics")
+    s.set_defaults(fn=cmd_channel)
+    s = sub.add_parser("log", help="record a video in channel/history.jsonl (made → posted → Insights numbers)")
+    s.add_argument("project")
+    s.add_argument("--status", default="made", choices=("scripted", "made", "posted", "skipped"))
+    s.add_argument("--topic")
+    s.add_argument("--pillar")
+    s.add_argument("--slot", choices=("reel_1", "reel_2"))
+    s.add_argument("--date")
+    s.add_argument("--views", type=int)
+    s.add_argument("--skip-rate", dest="skip_rate", type=float)
+    s.add_argument("--avg-watch", dest="avg_watch", type=float)
+    s.add_argument("--sends", type=int)
+    s.add_argument("--follows", type=int)
+    s.add_argument("--note")
+    s.set_defaults(fn=cmd_log)
     s = sub.add_parser("refs")
     s.add_argument("folder")
     s.set_defaults(fn=cmd_refs)

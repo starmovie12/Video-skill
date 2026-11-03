@@ -263,3 +263,80 @@ def test_dna_overrides_invalidate_cached_dna(tmp_path, monkeypatch):
     assert d2["motif"] == other and d2["caption_style"] == "viral"
     d3 = stage_dna(dict(proj, dna={"motif": other, "caption_style": "viral"}), tmp_path, tmp_path)
     assert d3 == d2  # same overrides → cache reused
+
+
+def test_qa_lists_every_static_run():
+    """QA reports ALL static runs > 2.5 s (not just the longest), so the Director fixes them in one re-render."""
+    from rvs.qa import longest_static, static_runs
+    d = np.array([1.0] * 10 + [0.0] * 30 + [1.0] * 5 + [0.0] * 20 + [0.1] * 26)
+    assert static_runs(d, 10) == [(1.0, 3.0), (4.5, 4.6)]
+    assert longest_static(d, 10)[0] == 4.6
+    assert static_runs(np.ones(50), 10) == []
+
+
+def _channel_dir(tmp_path, monkeypatch):
+    ch = {"name": "Test Channel", "handle": "@test.ch", "platform": "instagram", "account_type": "creator",
+          "weekly_rhythm": {"mon": "numbers", "tue": "decode", "wed": "facts", "thu": "decode", "fri": "this_week", "sat": "theory", "sun": "facts"},
+          "schedule": {"posts": [{"slot": "reel_1", "weekday": "13:00", "weekend": "12:30"},
+                                 {"slot": "reel_2", "weekday": "19:30", "weekend": "20:30"}], "stories_per_day": 3, "stories": []},
+          "reel_rules": {"target_sec": 50, "max_sec": 60, "hard_max_sec": 90, "hook_max_words": 16, "script_words": [110, 160],
+                         "send_cta_words": ["dost"], "hashtags_max": 5, "base_hashtags": ["#TestCh"]},
+          "defaults": {"category": "movie_review", "format": "reel", "target_sec": 50, "caption_script": "roman",
+                       "voice": {"preset": "hindi_male"}, "dna": {"caption_style": "viral", "motif": "dust"}}}
+    d = tmp_path / "channel"
+    d.mkdir()
+    (d / "channel.json").write_text(json.dumps(ch), encoding="utf-8")
+    monkeypatch.setenv("RVS_CHANNEL", str(d))
+    return d
+
+
+def test_channel_defaults_lint_hashtags(tmp_path, monkeypatch):
+    """Channel defaults fill a project (project values win); lint enforces the reel rules; hashtags follow the policy."""
+    _channel_dir(tmp_path, monkeypatch)
+    from rvs import channel as C
+    p = C.apply_defaults({"title": "x", "target_sec": 45, "dna": {"motif": "slashes"}, "beats": []})
+    assert p["target_sec"] == 45 and p["dna"] == {"caption_style": "viral", "motif": "slashes"}
+    assert p["format"] == "reel" and p["channel"]["handle"] == "@test.ch"
+    long_reel = {"target_sec": 200, "beats": [{"say": " ".join(["शब्द"] * 30), "show": "x"}, {"say": "a", "show": "Comment karo"}]}
+    errs, warns = C.lint(long_reel)
+    assert any("CHANNEL_LENGTH" in e for e in errs)
+    assert any("CHANNEL_HOOK" in w for w in warns) and any("CHANNEL_SEND_LINE" in w for w in warns)
+    assert any("CHANNEL_QUESTION" in w for w in warns)
+    ok = {"target_sec": 50, "beats": [{"say": "छोटा हुक", "show": "Chhota hook"},
+                                       {"say": "वो दोस्त", "show": "Wo dost jo hamesha late aata hai.", "data": {"question": "Hit ya flop?"}}]}
+    assert C.lint(ok) == ([], [])
+    assert C.lint(dict(long_reel, format="long"))[0] == []
+    tags = C.hashtags({"hashtags": ["#Ramayana"]}, C.load(), ["#King", "#moviereview", "#a", "#b", "#c", "#d"])
+    assert tags[0] == "#TestCh" and "#Ramayana" in tags and len(tags) == 5
+
+
+def test_channel_log_and_brief(tmp_path, monkeypatch):
+    """`log` appends a video and later updates the same project's row; the brief shows the pillar and recent topics."""
+    import datetime as dt
+    _channel_dir(tmp_path, monkeypatch)
+    from rvs import channel as C
+    C.log({"project": "p1", "topic": "Ramayana facts", "status": "made"})
+    C.log({"project": "p1", "status": "posted", "views": 1234, "notes": None})
+    rows = C.history()
+    assert len(rows) == 1 and rows[0]["status"] == "posted" and rows[0]["views"] == 1234 and rows[0]["topic"] == "Ramayana facts"
+    b = C.brief(dt.date(2026, 11, 4))
+    assert "wed" in b["today"] and "facts" in b["today"] and "decode" in b["tomorrow"]
+    assert b["reels_today_ist"] == ["reel_1 13:00", "reel_2 19:30"] and "Ramayana facts" in b["recent_topics_do_not_repeat"][0]
+    assert C.post_times(dt.date(2026, 11, 7), C.load()) == ["reel_1 12:30", "reel_2 20:30"]  # Saturday
+    assert C.slot_time({"slot": "reel_2"}, C.load(), dt.date(2026, 11, 4)) == "19:30"
+    assert C.slot_time({"slot": "reel_2", "post_at": "18:00"}, C.load()) == "18:00"
+
+
+def test_handover_markdown_and_sections():
+    """The handover PDF reads the operator's script pack: numbered sections, pipe tables, lists, code and the YAML handoff."""
+    from rvs.handover import handoff_yaml, md_sections, md_to_html
+    md = ("# Script pack\n\n## 1. Verdict (read first)\nStatus: **READY**.\n\n| a | b |\n|---|---|\n| x `y` | [s](https://e.x) |\n\n"
+          "## 2. Final script\n- one\n  - sub\n- [ ] todo\n1. first\n\n> tip\n\n## 8. Handoff for Prompt 3\n```yaml\ntitle: T\nhashtags:\n  - '#A'\n```\n")
+    sec = md_sections(md)
+    assert set(sec) == {1, 2, 8} and sec[1][0].startswith("Verdict")
+    h = md_to_html(sec[1][1])
+    assert "<table>" in h and "<code>y</code>" in h and 'href="https://e.x"' in h and "<b>READY</b>" in h
+    h2 = md_to_html(sec[2][1])
+    assert "<ul><li>one<ul><li>sub</li></ul></li><li>☐ todo</li></ul>" in h2 and "<ol><li>first</li></ol>" in h2 and "callout" in h2
+    y = handoff_yaml(md)
+    assert y["title"] == "T" and y["hashtags"] == ["#A"]

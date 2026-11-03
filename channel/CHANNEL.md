@@ -1,0 +1,111 @@
+# Scene Samjho: channel playbook
+
+> Machine-readable version: `channel/channel.json` (the engine reads it). This file is the "why" and the "how".
+> 30-day growth plan with sources: `channel/GROWTH_PLAN.md`.
+
+## Who we are
+
+| | |
+|---|---|
+| Name | **Scene Samjho** |
+| Instagram | **@scene.samjho1**: Creator account (full music library), category "Reel creator" |
+| Bio | 🎬 Trailer, gaane, box office: DECODE in Hindi \| 🔍 Har scene ka asli matlab \| 🕐 Roz 2 reels: 1 PM & 7:30 PM |
+| Niche | Bollywood + OTT **DECODE** in Hindi. Never mix in other niches (AI tips, call recordings, reposts) |
+| Audience | Hindi-speaking movie fans in India, 16–35, on phones, often with sound off |
+| Language | Hindi voice-over (written in Devanagari for TTS) + Roman Hinglish captions |
+| Started | 3 Nov 2026 (old posts archived; Account Status all green) |
+
+## Pillars and weekly rhythm
+
+| Day | Pillar | What | Typical archetypes |
+|---|---|---|---|
+| Mon | 📊 numbers | Weekend box office, budget, advance booking: one big number | stat_counter, timeline, split_compare |
+| Tue | 🎬 decode | New trailer / song / teaser, scene by scene | story_panels, split_compare, quote_kinetic |
+| Wed | 🤯 facts | "N baatein jo koi nahi jaanta" | fact_bomb, cast_spotlight, list_reveal |
+| Thu | 🎬 decode | Same as Tue | |
+| Fri | 📺 this_week | Theatre + OTT this week, one-line verdict each | list_reveal, verdict_stamp |
+| Sat | 🤔 theory | Fan theories or a debate | list_reveal, split_compare, cta_loop |
+| Sun | 🤯 facts | Evergreen / throwback facts | fact_bomb, timeline |
+
+**Trend override:** if a big trailer, teaser, song, release or box-office headline broke in the last 24 h, drop the pillar and decode that, the same day.
+
+## Schedule (IST): 2 reels + 3 Stories every day (from 4 Nov 2026)
+
+| Slot | Mon–Fri | Sat–Sun | Topic |
+|---|---|---|---|
+| **reel_1** | **13:00** | 12:30 | The time-sensitive topic (release tomorrow, trailer just out, box-office headline), so it has more hours to spread |
+| **reel_2** | **19:30** | 20:30 | Prime time: the day's pillar or the strongest topic |
+
+**Slot rules:**
+- Two different topics a day. Never two reels on the same film the same day.
+- Set `"slot": "reel_1"` or `"reel_2"` in project.json. The upload pack then prints the exact time.
+
+**Stories (3 a day, a 4th optional):**
+
+| Time | Story |
+|---|---|
+| 09:00 | Poll / quiz about today's two topics ("Aaj Ramayana ya Eetha?") |
+| 13:15 | Share reel 1 with a "NEW REEL" sticker |
+| 19:45 | Share reel 2 |
+| 21:30 | Optional: poll result, question box, or tomorrow's teaser |
+
+**Day plan:**
+
+| Time | What |
+|---|---|
+| 09:00 | Research both topics (last 24–48 h) · morning Story |
+| 09:30 | Script MD for reel 1 → operator → **wait for "continue"** |
+| 10:00 | Make reel 1 (proof → make → QA → deliver) · script MD for reel 2 |
+| 13:00 | Reel 1 live · reply to comments till 14:00 |
+| 15:00 | Make reel 2 after "continue" |
+| 19:30 | Reel 2 live · reply to comments till 20:30 |
+| +24 h | `run.py log … --slot reel_1/reel_2 --status posted --views … --skip-rate … --avg-watch … --sends … --follows …` |
+
+Timing sources:
+- Third-party India data puts weekday evenings (7–9 PM) strongest and 11 AM–2 PM second.
+- One source suggests 2–3 Stories a day; Mosseri reportedly advises "a couple of Stories per day".
+- After 2 weeks, check Insights → "Most active times" and move the slots if needed.
+
+## Reel rules (and why)
+
+| Rule | Why |
+|---|---|
+| 45–60 s, never over 90 s | Watch-time %. Reels over 3 min are reported not to reach non-followers, and new accounts grow from non-followers |
+| Hook ≤ 16 words, lands in ~2 s, subject on screen in frame 1 | Skip rate = viewers gone in the first 3 s |
+| One topic per reel | People watch to the end |
+| Last beat = send line + two-option question | Instagram's top signals: watch time, likes per reach, **sends per reach** (sends weigh more for non-followers) |
+| Facts with sources; theories labelled | Trust; no misinformation |
+| Original only: our VO + analysis + graphics; Commons CC photos with credits | April 2026 originality policy: repost-heavy accounts lose recommendations |
+| Cover always (the skill's `cover_9x16.jpg`) | Grid clicks; a blank thumbnail kills profile visits |
+| ≤ 5 hashtags, `#SceneSamjho` first | Reported 5-hashtag limit; no spam look |
+| `_no_music.mp4` + a trending Instagram audio at 10–15 % | Creator account has the full music library |
+
+## Script template (≈50 s, 130–150 words)
+
+1. **hook** (`hook_slam`): the most surprising fact, ≤ 14 words. No greeting.
+2. **context** (`kinetic_line`): why now (release, trailer, number), ≤ 15 words.
+3–7. **content beats:** 4–5 beats from the pillar's archetypes, 12–20 words each, one fact per beat, no archetype twice in a row.
+8. **cta** (`cta_loop`): "Ye video us dost ko bhejo jo …" + a two-option question ("FDFS ya review ke baad?").
+
+- `say` = Devanagari for the voice; `show` = Roman Hinglish, the same number of words.
+- Hero words on the payoff word of each beat.
+- Beats where the graphic appears late (story panels, cards, counters) need enough media items that a cut lands within ~2.2 s (see SKILL.md, "Where cuts land").
+
+## Prompts the operator uses
+
+- **A, topic:** "Skill activate karo. Aaj ka topic research karo" or "<film> par reel".
+  - Claude runs `run.py channel`, researches the last 24–48 h and picks the topic.
+  - Then it runs the three-prompt system (`prompts/ADAPTATION.md`): research brief → script doctor → proof frames → **handover PDF**.
+  - The PDF goes to the operator.
+- **B, make:** "continue". Claude builds the project, renders proof → make → QA → deliver, then logs it.
+- **C, weekly review:** "Ye 7 reels ke Insights screenshots hain, review karo."
+  - Claude updates `history.jsonl` with the numbers and compares hooks, pillars and lengths.
+  - It adjusts the plan in `channel.json` if needed.
+- **D, part 2:** "Ye reel chala, iska part 2 / naya hook version banao."
+
+## History and memory
+
+- `channel/history.jsonl`: one row per video (topic, pillar, hook, length, status, Insights numbers).
+  - Never repeat a topic that is already there, unless it is a deliberate Part 2.
+- `channel/state/ledger.json`: past looks. The next video's Style DNA differs from the last ones.
+- Commit + push both after every video, so a new chat remembers.

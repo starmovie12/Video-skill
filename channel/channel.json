@@ -1,0 +1,160 @@
+{
+  "_about": "The ONE channel this skill makes videos for. Every new project, lint, QA and upload pack reads this file. Edit it when the channel changes.",
+  "platform": "instagram",
+  "handle": "@scene.samjho1",
+  "name": "Scene Samjho",
+  "account_type": "creator",
+  "category_label": "Reel creator",
+  "bio": "🎬 Trailer, gaane, box office: DECODE in Hindi | 🔍 Har scene ka asli matlab | 🕐 Roz 2 reels: 1 PM & 7:30 PM",
+  "started": "2026-11-03",
+  "language": "Hindi voice-over (Devanagari for TTS), Roman Hinglish on-screen captions",
+  "niche": "Bollywood + OTT DECODE in Hindi: trailers, songs, box office, OTT releases, film facts — har scene ka asli matlab",
+  "audience": "Hindi-speaking movie fans in India, 16–35, mostly on phones, sound often off",
+  "pillars": {
+    "decode": "Trailer / song / teaser decoded scene by scene: clues about the film's story",
+    "numbers": "Box office, budget, advance booking, records: one big number per reel",
+    "facts": "N things nobody knows about a film / star / release",
+    "this_week": "What to watch this week: theatre + OTT, with a one-line verdict each",
+    "theory": "Fan theories or a debate with a two-option question"
+  },
+  "weekly_rhythm": {
+    "mon": "numbers",
+    "tue": "decode",
+    "wed": "facts",
+    "thu": "decode",
+    "fri": "this_week",
+    "sat": "theory",
+    "sun": "facts"
+  },
+  "trend_override": "If a big trailer / teaser / song / release / box-office headline broke in the last 24 h, skip the day's pillar and decode that instead, posted the same day.",
+  "schedule": {
+    "timezone": "Asia/Kolkata",
+    "reels_per_day": 2,
+    "posts": [
+      {
+        "slot": "reel_1",
+        "weekday": "13:00",
+        "weekend": "12:30",
+        "what": "Time-sensitive topic (release tomorrow, trailer just out, box-office headline): more hours to spread before it gets old"
+      },
+      {
+        "slot": "reel_2",
+        "weekday": "19:30",
+        "weekend": "20:30",
+        "what": "Prime time: the day's pillar or the strongest topic"
+      }
+    ],
+    "slot_rule": "Two different topics a day, never two reels on the same film the same day. Both scripts go to the operator in the morning; each is rendered only after 'continue'.",
+    "stories_per_day": 3,
+    "stories": [
+      {
+        "time": "09:00",
+        "what": "Poll / quiz about today's two topics (e.g. 'Aaj Ramayana ya Eetha?')"
+      },
+      {
+        "time": "13:15",
+        "what": "Share reel 1 to Story with a 'NEW REEL' sticker"
+      },
+      {
+        "time": "19:45",
+        "what": "Share reel 2 to Story"
+      },
+      {
+        "time": "21:30",
+        "what": "Optional 4th: poll result / question box / tomorrow's teaser"
+      }
+    ],
+    "day_plan": [
+      {
+        "time": "09:00",
+        "what": "Research both topics (last 24–48 h) + morning Story"
+      },
+      {
+        "time": "09:30",
+        "what": "Script MD for reel 1 → operator → 'continue'"
+      },
+      {
+        "time": "10:00",
+        "what": "Make reel 1 (proof → make → QA → deliver); script MD for reel 2"
+      },
+      {
+        "time": "13:00",
+        "what": "Reel 1 live · reply to comments till 14:00"
+      },
+      {
+        "time": "15:00",
+        "what": "Make reel 2 after 'continue'"
+      },
+      {
+        "time": "19:30",
+        "what": "Reel 2 live · reply to comments till 20:30"
+      },
+      {
+        "time": "next day",
+        "what": "`run.py log` with 24 h Insights numbers for both reels"
+      }
+    ],
+    "reply_window_min": 60
+  },
+  "reel_rules": {
+    "target_sec": 50,
+    "min_sec": 30,
+    "max_sec": 60,
+    "hard_max_sec": 90,
+    "hook_max_words": 16,
+    "script_words": [
+      110,
+      160
+    ],
+    "send_cta_words": [
+      "dost",
+      "yaar",
+      "fan",
+      "jo log",
+      "wale log",
+      "unke liye",
+      "logon ke liye"
+    ],
+    "hashtags_max": 5,
+    "base_hashtags": [
+      "#SceneSamjho"
+    ],
+    "cover_required": true,
+    "one_topic_per_reel": true,
+    "facts_need_sources": true,
+    "engagement_rule": "Script Doctor v4: exactly ONE explicit CTA = the two-option comment question, shown on screen over the last beat (cta_loop data.question) + caption + pinned comment; the voice ends on the loop line; one send-worthy line names a kind of person ('wo dost jo…'); never 'share / like / follow / save karo'."
+  },
+  "defaults": {
+    "category": "movie_review",
+    "format": "reel",
+    "target_sec": 50,
+    "caption_script": "roman",
+    "cover_tag": "SCENE SAMJHO",
+    "voice": {
+      "engine": "auto",
+      "preset": "hindi_male"
+    },
+    "dna": {
+      "caption_style": "viral",
+      "motif": "dust"
+    },
+    "disclosure": "AI voice"
+  },
+  "workflow": [
+    "1. `python run.py channel` — brief: today's pillar, both reel slots, stories, recent topics (never repeat one).",
+    "2. Topic → prompts/1-research-brief.md → <project>/pack/research-brief_<slug>.md (web research, sources with dates).",
+    "3. prompts/2-script-doctor.md (v4): Draft-0 from the brief → score → flaws → 3 angles, 3 hooks, 2 drafts → swipe test → re-audit → <project>/pack/script-pack_<slug>.md.",
+    "4. Beats into project.json (say = Devanagari, show = Roman, same word count; slot; post_date) → lint → voice → proof → look at frames, fix layout.",
+    "5. `python run.py handover <project>` (prompts/3-pdf-handover-builder.md adapted) → open every page PNG → fix → send the PDF. STOP: wait for 'continue'.",
+    "6. After 'continue': make → QA PASS + review.md → deliver → send mp4, _no_music.mp4, cover, upload pack.",
+    "7. `run.py log <project> --status made`; after posting/24 h: `--status posted` + Insights numbers. Commit + push channel/."
+  ],
+  "never": [
+    "Raw movie clips or someone else's reel re-posted as is (Instagram originality policy)",
+    "Reels longer than 90 s for discovery (3 min+ reels are not pushed to non-followers)",
+    "Facts without a source; fan theories without the word 'theory'",
+    "A greeting as the first line; a reel without a cover; more than 5 hashtags",
+    "Committing copyrighted stills or the final videos to this repo"
+  ],
+  "growth_plan": "channel/GROWTH_PLAN.md"
+}

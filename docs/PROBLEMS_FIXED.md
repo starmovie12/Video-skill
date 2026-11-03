@@ -142,5 +142,29 @@ Status values:
 | P-68 | Cast portraits with 3 people: a 2-line name + role chip ran into the next row's circle | Circle size follows the row slot; name + chip block is centred on its row and fits between neighbouring rings |
 | P-69 | List items low on the screen reached x≈1050 (Reels buttons zone) | Items below y=1000 use the low safe width |
 | P-70 | A stat beat whose number is spoken late showed one still for 4 s (QA static run) | SKILL.md: give such beats two media so a cut lands before the counter |
+| P-71 | QA reported only the longest static run, so each fix needed another full render to find the next one | `no_static_runs` also lists `all` runs > 2.5 s as [start, length] |
 
-Tests: 18 → 20 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`).
+Tests: 18 → 21 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`, `test_qa_lists_every_static_run`).
+
+## v2.2 — channel mode (Scene Samjho)
+
+| # | Operator asked | Fix |
+|---|---|---|
+| C-01 | "Skill ko yaad rahe ki channel kaunsa hai, har nayi chat mein" | `CLAUDE.md` (auto-loaded every session) + `channel/channel.json` (name, handle, niche, pillars, rhythm, schedule, reel rules) + `run.py channel` brief |
+| C-02 | "Har video channel ke hisaab se bane" | `apply_defaults` on every project load and on `new` (50 s reel, viral captions, quiet motif, voice, handle on the end card); project values win |
+| C-03 | "Video viral jaaye" rules | Lint: length/word count (hard), hook ≤ 16 words, send line, two-option question. QA `channel_reel_length` ≤ 90 s (hard). Upload pack: posting time, ≤ 5 hashtags with `#SceneSamjho` first |
+| C-04 | "Pichhli videos yaad rahein" | `channel/history.jsonl` + `run.py log` (made → posted → Insights numbers); variety ledger moved to committed `channel/state/` so a new cloud session keeps it |
+| C-05 | "Pehle script dikhao, phir banao" | Workflow in CLAUDE.md, SKILL.md §0 and CHANNEL.md: script MD with sources → wait for "continue" → render |
+
+Tests: 21 → 23 (`test_channel_defaults_lint_hashtags`, `test_channel_log_and_brief`).
+
+## v2.3 — the operator's script system (topic → PDF → "continue" → video)
+
+| # | Operator asked / found | Fix |
+|---|---|---|
+| S-01 | "Topic do to pehle poori PDF do, phir continue par video" | `prompts/` (Research Brief v3, Script Doctor v4, PDF Handover v3) + `prompts/ADAPTATION.md`; `run.py handover` builds the PDF from the brief, the script pack and the engine's real proof frames, and rasterises every page for a visual check |
+| S-02 | Script Doctor v4 engagement rule (one CTA, voice ends on the loop line) | Channel lint accepts the on-screen question (`data.question`) and checks for a send-worthy line; `cta_loop` can drop the second chip (`comment_cta: ""`); kill-list phrases added to the cliché check |
+| S-03 | India IT Rules 2026 (synthetic content labels) | `disclosure` field (channel default "AI voice") printed with the handle on the end card |
+| S-04 | Stale proof frames from earlier runs leaked into reviews | `proof` clears `work/proof_frames/` first |
+| S-05 | A 5-item save card was cut to 4 | `list_reveal` shows up to 5 items |
+| S-06 | Poster card in the "poster_punch" opening covered the face on a poster background | Director note: use `word_smash` + letterbox `y` when the hook still is a poster |

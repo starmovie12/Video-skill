@@ -16,7 +16,10 @@ from .dna import DIMS, diff_count, load_ledger
 
 GREETINGS = re.compile(r"^\s*(namaste|namaskar|hello|hi+|hey|kaise ho|welcome|aaj hum|doston|dosto|guys|नमस्ते|नमस्कार|दोस्तों|आज हम)", re.I)
 CLICHES = ["paisa vasool", "hollywood level", "hollywood-level", "must watch film hai", "edge of the seat", "mind blowing", "mind-blowing",
-           "next level", "goosebumps", "slow second half", "one time watch", "blockbuster"]
+           "next level", "goosebumps", "slow second half", "one time watch", "blockbuster",
+           # kill list from prompts/2-script-doctor.md (v4)
+           "kya aapko pata hai", "chaliye shuru karte hain", "last tak dekhna", "hairan reh jaoge", "aapko hila dega",
+           "follow for more", "like karo", "share karo", "follow karo", "save karo", "comment yes"]
 
 
 def dhash(img: Image.Image, n=8) -> int:
@@ -55,6 +58,19 @@ def longest_static(d, fps, thr=0.4):
     return best / fps, at / fps
 
 
+def static_runs(d, fps, thr=0.4, limit=2.5):
+    """Every run of near-static frames longer than `limit` s as (start_s, length_s), so all of them can be fixed in one pass."""
+    out, run = [], 0
+    for i, v in enumerate(list(d) + [thr]):  # sentinel closes a run at the end
+        if v < thr:
+            run += 1
+            continue
+        if run / fps > limit:
+            out.append((round((i - run) / fps, 1), round(run / fps, 1)))
+        run = 0
+    return out
+
+
 def banding_score(img: Image.Image) -> float:
     """Share of 4×4 blocks in mid-tones that are perfectly flat (0 variance) — flat plateaus = 8-bit banding / dead fills."""
     a = np.asarray(img.convert("L"), np.int16)[250:1480]
@@ -85,6 +101,12 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
     if tgt:
         tol = max(3.0, 0.10 * tgt)
         chk("duration_vs_target", abs(dur - tgt) <= tol, round(dur, 2), f"|{dur:.1f}s − {tgt}s| ≤ {tol:.1f}s (fix the SCRIPT, not the speed)")
+    if project.get("channel") and project.get("format", "reel") == "reel":
+        from .channel import load as load_channel
+        hard_max = ((load_channel() or {}).get("reel_rules") or {}).get("hard_max_sec", 90)
+        chk("channel_reel_length", dur <= hard_max, round(dur, 2),
+            f"{project['channel'].get('handle')} reels ≤ {hard_max}s (longer reels are not pushed to non-followers); "
+            f"\"format\": \"long\" for a deliberate long video")
     # structure
     plan = tl.plan
     designs = {(p["archetype"], p["variant"]) for p in plan}
@@ -121,7 +143,8 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
     # motion / static runs / hook
     d, fps = motion_profile(final)
     longest, at = longest_static(d, fps)
-    chk("no_static_runs", longest <= 2.5, {"longest_s": round(longest, 2), "at_s": round(at, 2)}, "a visible visual event (≥0.4 % of pixels change) at least every 2.5 s")
+    chk("no_static_runs", longest <= 2.5, {"longest_s": round(longest, 2), "at_s": round(at, 2), "all": static_runs(d, fps)[:12]},
+        "a visible visual event (≥0.4 % of pixels change) at least every 2.5 s; `all` = every run > 2.5 s as [start, length]")
     hook_energy = float(d[: int(1.5 * fps)].max()) if len(d) else 0
     chk("hook_pattern_interrupt", hook_energy > 20.0, round(hook_energy, 1), "≥ 20 % of the frame changes inside the first 1.5 s")
     first = (project["beats"][0].get("show") or project["beats"][0].get("say") or "")

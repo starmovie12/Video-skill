@@ -56,6 +56,17 @@ def rvs_home() -> Path:
     return p
 
 
+def state_home() -> Path:
+    """Variety ledger + taste memory. RVS_HOME wins; else the committed `channel/state/` of the skill repo (so a new cloud
+    session still remembers past videos' looks); else ~/.rvs. Models/caches stay in rvs_home()."""
+    if os.environ.get("RVS_HOME"):
+        return rvs_home()
+    p = Path(__file__).resolve().parent.parent / "channel" / "state"
+    if p.is_dir():
+        return p
+    return rvs_home()
+
+
 def stable_seed(*parts) -> int:
     return int(hashlib.sha256("|".join(map(str, parts)).encode()).hexdigest()[:12], 16)
 

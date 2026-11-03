@@ -17,6 +17,17 @@ v2 me focus: **asli footage + tez editing + modern awaaz** — slideshow nahi, e
 
 v1 ki sab cheezein bani hain: Style DNA (har video alag), Variety Ledger, 19 scene archetypes, design QA, proof, honest review gate.
 
+## Scene Samjho channel mode (v2.2)
+
+Ye skill ab **ek hi channel** ke liye set hai: **Scene Samjho**, Instagram [@scene.samjho1](https://instagram.com/scene.samjho1), Bollywood + OTT ka DECODE Hindi me.
+
+- **Repo me kya hai:** `channel/channel.json` me channel ka naam, niche, pillars, roz ka schedule (**2 reels: 1:00 PM + 7:30 PM IST**, 3 stories) aur reel rules hain. `CLAUDE.md` har nayi chat me apne aap padha jaata hai.
+- **`python run.py channel`:** aaj aur kal ka pillar, posting time, rules, aur pichhle topics (repeat nahi karne).
+- **Har naya project:** apne aap 50 s reel, viral captions, end card par @scene.samjho1. Lint/QA 90 s se lamba reel rokte hain. Upload pack me posting time aur `#SceneSamjho` ke saath max 5 hashtags.
+- **Flow:** research → script MD (operator ko dikhao) → **"continue"** → video → `python run.py log <project> --status made/posted` → `channel/` commit.
+- **Yaad kahan rehti hai:** har video `channel/history.jsonl` aur `channel/state/` me rehta hai, isliye nayi chat ko bhi pichhli videos yaad rehti hain.
+- **Docs:** playbook `channel/CHANNEL.md`, 30 din ka plan `channel/GROWTH_PLAN.md`.
+
 ## Install
 
 ```bash

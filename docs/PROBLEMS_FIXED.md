@@ -142,5 +142,6 @@ Status values:
 | P-68 | Cast portraits with 3 people: a 2-line name + role chip ran into the next row's circle | Circle size follows the row slot; name + chip block is centred on its row and fits between neighbouring rings |
 | P-69 | List items low on the screen reached x≈1050 (Reels buttons zone) | Items below y=1000 use the low safe width |
 | P-70 | A stat beat whose number is spoken late showed one still for 4 s (QA static run) | SKILL.md: give such beats two media so a cut lands before the counter |
+| P-71 | QA reported only the longest static run, so each fix needed another full render to find the next one | `no_static_runs` also lists `all` runs > 2.5 s as [start, length] |
 
-Tests: 18 → 20 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`).
+Tests: 18 → 21 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`, `test_qa_lists_every_static_run`).

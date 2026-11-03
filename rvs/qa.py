@@ -55,6 +55,19 @@ def longest_static(d, fps, thr=0.4):
     return best / fps, at / fps
 
 
+def static_runs(d, fps, thr=0.4, limit=2.5):
+    """Every run of near-static frames longer than `limit` s as (start_s, length_s), so all of them can be fixed in one pass."""
+    out, run = [], 0
+    for i, v in enumerate(list(d) + [thr]):  # sentinel closes a run at the end
+        if v < thr:
+            run += 1
+            continue
+        if run / fps > limit:
+            out.append((round((i - run) / fps, 1), round(run / fps, 1)))
+        run = 0
+    return out
+
+
 def banding_score(img: Image.Image) -> float:
     """Share of 4×4 blocks in mid-tones that are perfectly flat (0 variance) — flat plateaus = 8-bit banding / dead fills."""
     a = np.asarray(img.convert("L"), np.int16)[250:1480]
@@ -121,7 +134,8 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
     # motion / static runs / hook
     d, fps = motion_profile(final)
     longest, at = longest_static(d, fps)
-    chk("no_static_runs", longest <= 2.5, {"longest_s": round(longest, 2), "at_s": round(at, 2)}, "a visible visual event (≥0.4 % of pixels change) at least every 2.5 s")
+    chk("no_static_runs", longest <= 2.5, {"longest_s": round(longest, 2), "at_s": round(at, 2), "all": static_runs(d, fps)[:12]},
+        "a visible visual event (≥0.4 % of pixels change) at least every 2.5 s; `all` = every run > 2.5 s as [start, length]")
     hook_energy = float(d[: int(1.5 * fps)].max()) if len(d) else 0
     chk("hook_pattern_interrupt", hook_energy > 20.0, round(hook_energy, 1), "≥ 20 % of the frame changes inside the first 1.5 s")
     first = (project["beats"][0].get("show") or project["beats"][0].get("say") or "")

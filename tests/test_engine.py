@@ -263,3 +263,12 @@ def test_dna_overrides_invalidate_cached_dna(tmp_path, monkeypatch):
     assert d2["motif"] == other and d2["caption_style"] == "viral"
     d3 = stage_dna(dict(proj, dna={"motif": other, "caption_style": "viral"}), tmp_path, tmp_path)
     assert d3 == d2  # same overrides → cache reused
+
+
+def test_qa_lists_every_static_run():
+    """QA reports ALL static runs > 2.5 s (not just the longest), so the Director fixes them in one re-render."""
+    from rvs.qa import longest_static, static_runs
+    d = np.array([1.0] * 10 + [0.0] * 30 + [1.0] * 5 + [0.0] * 20 + [0.1] * 26)
+    assert static_runs(d, 10) == [(1.0, 3.0), (4.5, 4.6)]
+    assert longest_static(d, 10)[0] == 4.6
+    assert static_runs(np.ones(50), 10) == []

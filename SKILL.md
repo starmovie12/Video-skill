@@ -91,7 +91,8 @@ A still can also be a dict, so a few wide stills can be used in several ways:
 - **Low-resolution stills** (e.g. under ~600 px tall): use letterbox. A cover crop of them is blurry.
 - **Letterbox position:** add `"y": 0.62` to move the sharp band lower when the beat's big text sits in the upper half, so text never covers faces (default 0.46). Crop + letterbox together zooms in but keeps the image's full height.
 - **Variety:** never put the same file on two consecutive beats. Alternate crops and letterbox of the same still between non-adjacent beats.
-- **Late data:** `stat_counter` / `fact_bomb` show their number when it is spoken. If that word comes late in a long beat, give the beat two media (a list) so a cut lands before it; otherwise QA flags a static run.
+- **Late data:** `stat_counter` / `fact_bomb` show their number when it is spoken. If that word comes late in a long beat, give the beat several media (a list) so a cut lands before it; otherwise QA flags a static run.
+- **Where cuts land:** a list of N media is split evenly over the beat (each cut snapped to the nearest word), so the first cut is at about beat_length / N. When nothing else appears early in the beat (story panels, pros/cons cards, counters keyed to later words), choose N so that beat_length / N ≤ 2.2 s. QA `no_static_runs` → `all` lists every still stretch to fix in one pass.
 
 Guidelines:
 - Hook = the most striking image (a face, an action, a shock).

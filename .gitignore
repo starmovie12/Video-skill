@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.env
+# per-project render outputs (examples keep project.json + inputs + preview_720p.mp4 + contact_sheet.jpg + qa/review)
+examples/*/work/
+examples/*/out/
+**/.seg_*/
+*.part

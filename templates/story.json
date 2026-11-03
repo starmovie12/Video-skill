@@ -1,0 +1,86 @@
+{
+  "title": "STORY",
+  "id": "story-reel",
+  "category": "story",
+  "target_sec": 45,
+  "caption_script": "roman",
+  "facts": {
+    "title": "STORY",
+    "sources": [
+      "URL"
+    ]
+  },
+  "assets": {},
+  "voice": {
+    "engine": "auto",
+    "voice": "hi-IN-MadhurNeural",
+    "rate": "+18%"
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "role": "hook",
+      "say": "HOOK: kahani ka sabse dramatic pal",
+      "show": "HOOK: kahani ka sabse dramatic pal",
+      "hero": [
+        "HOOK"
+      ]
+    },
+    {
+      "id": "ch1",
+      "role": "chapter",
+      "say": "Shuruaat",
+      "show": "Shuruaat",
+      "data": {
+        "number": 1,
+        "title": "Shuruaat"
+      }
+    },
+    {
+      "id": "l1",
+      "role": "line",
+      "say": "Kahani ka pehla mod",
+      "show": "Kahani ka pehla mod",
+      "hero": [
+        "mod"
+      ]
+    },
+    {
+      "id": "tl",
+      "role": "timeline",
+      "say": "Kab kya hua",
+      "show": "Kab kya hua",
+      "data": {
+        "events": [
+          {
+            "year": "YEAR",
+            "label": "event"
+          },
+          {
+            "year": "YEAR",
+            "label": "event"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q",
+      "role": "quote",
+      "say": "Kahani ki seekh, ek line",
+      "show": "Kahani ki seekh, ek line",
+      "hero": [
+        "seekh"
+      ]
+    },
+    {
+      "id": "cta",
+      "role": "cta",
+      "say": "Aap hote to kya karte? Comment karo.",
+      "show": "Aap hote to kya karte? Comment karo.",
+      "data": {
+        "question": "Aap hote to kya karte?",
+        "cta": "FOLLOW"
+      }
+    }
+  ]
+}

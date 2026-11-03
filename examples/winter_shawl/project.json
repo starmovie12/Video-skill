@@ -1,0 +1,22 @@
+{
+  "title": "Winter Shawl Collection (DEMO DATA)",
+  "id": "winter-shawl-demo",
+  "category": "product",
+  "target_sec": 18,
+  "caption_script": "roman",
+  "_note": "DEMO: product name, colours and prices are placeholders — replace with your real catalogue data and product photo (assets.product).",
+  "facts": {"title": "Winter Shawl"},
+  "assets": {},
+  "voice": {"engine": "auto", "voice": "hi-IN-SwaraNeural", "rate": "+15%"},
+  "beats": [
+    {"id": "hook", "role": "hook", "say": "सर्दी आ गई… और ये शॉल सबसे पहले बिकेगी!", "show": "Sardi aa gayi… aur ye shawl sabse pehle bikegi!", "hero": ["shawl", "pehle"]},
+    {"id": "product", "role": "product", "say": "नई विंटर कलेक्शन: सॉफ़्ट पश्मीना-फ़ील शॉल, बारह रंगों में।", "show": "Nayi winter collection: soft pashmina-feel shawl, barah rangon mein.",
+     "data": {"name": "Pashmina-Feel Shawl", "tag": "NEW WINTER COLLECTION"}},
+    {"id": "features", "role": "features", "say": "हल्की, गरम, और मशीन वॉश फ्रेंडली।", "show": "Halki, garam, aur machine wash friendly.",
+     "data": {"features": ["Halki", "Garam", "Machine wash"]}},
+    {"id": "price", "role": "price", "say": "कीमत? सिर्फ़ चौदह सौ निन्यानवे, पहले बाइस सौ थी।", "show": "Keemat? Sirf chaudah sau ninyanve, pehle baais sau thi.",
+     "data": {"price": "₹1,499", "old_price": "₹2,200", "note": "12 RANG"}},
+    {"id": "cta", "role": "cta", "say": "कौन सा रंग चाहिए? कमेंट में लिखो।", "show": "Kaun sa rang chahiye? Comment mein likho.", "hero": ["rang"],
+     "data": {"question": "Kaun sa rang chahiye?", "cta": "DM TO ORDER"}}
+  ]
+}

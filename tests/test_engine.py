@@ -115,3 +115,113 @@ def test_render_smoke(tmp_path, monkeypatch):
     cap = Captioner(voice["words"], d)
     assert sum(len(g["words"]) for g in cap.groups) == len(voice["words"])
     assert all(len(g["words"]) <= 3 for g in cap.groups)
+
+
+# ───────────────────────── v2 features ─────────────────────────
+def test_dtw_alignment_handles_numbers_and_spelling():
+    from rvs.voice import align_tokens
+    toks = "106 साल पुरानी फिल्म और आज भी डरावनी".split()
+    words = [("एक", 0.0, 0.3), ("सो", 0.36, 0.5), ("छे", 0.56, 0.75), ("साल", 0.8, 1.0), ("पुरानी", 1.08, 1.5), ("फ़िल्म", 1.56, 1.9),
+             ("और", 2.58, 2.8), ("आजज", 2.92, 3.2), ("भी", 3.28, 3.4), ("दरावनी", 3.42, 3.9)]
+    al = align_tokens(toks, words)
+    assert abs(al[1][0] - 0.8) < 0.05 and abs(al[2][0] - 1.08) < 0.05 and abs(al[7][0] - 3.42) < 0.05
+    assert all(al[i][0] <= al[i + 1][0] for i in range(len(al) - 1))  # monotonic
+
+
+def test_elevenlabs_alignment_mapping():
+    from rvs.voice import eleven_chars_to_words
+    text = "हाँ ये ज़बरदस्त है"
+    chars = list(text)
+    st = [i * 0.1 for i in range(len(chars))]
+    en = [i * 0.1 + 0.09 for i in range(len(chars))]
+    w = eleven_chars_to_words(text, {"characters": chars, "character_start_times_seconds": st, "character_end_times_seconds": en})
+    assert len(w) == 4 and w[0][0] == 0.0 and w[1][0] == pytest.approx(0.4) and w[3][1] == pytest.approx(en[-1])
+
+
+def test_reel_pacing_edits_keep_timing_consistent():
+    from rvs.voice import SR, hero_pauses, tighten
+    x = np.zeros(int(3.0 * SR), np.float32)
+    tw = [(0.1, 0.5), (1.2, 1.6), (1.6, 2.0)]
+    x2, tw2 = tighten(x, tw, ["ek", "do", "teen"])
+    assert tw2[1][0] - tw2[0][1] == pytest.approx(0.13, abs=0.01) and len(x2) < len(x)
+    x3, tw3 = hero_pauses(x2, tw2, ["ek", "do", "teen"], {"teen"})
+    assert tw3[2][0] - tw3[1][1] == pytest.approx(0.16, abs=0.01) and tw3[1][1] == pytest.approx(tw2[1][1])
+
+
+def test_beat_grid_detects_tempo():
+    from rvs.audio import SR, beat_grid, kick, place
+    bpm = 120
+    x = np.zeros((SR * 12, 2), np.float32)
+    for k in range(24):
+        place(x, kick(0), 0.25 + k * 60 / bpm, 0.9)
+    b, off = beat_grid(x)
+    assert abs(b - bpm) < 2 or abs(b - bpm / 2) < 1 or abs(b - bpm * 2) < 2
+    assert abs(((off - 0.25) % 0.5)) < 0.06 or abs(((off - 0.25) % 0.5) - 0.5) < 0.06
+
+
+def test_sticker_matching_and_assets():
+    from rvs import stickers as ST
+    assert len(ST.available()) >= 80
+    words = [{"show": "aaj", "t0": 0.1}, {"show": "bhi", "t0": 0.3}, {"show": "daravni!", "t0": 0.6}]
+    assert ST.match(words, set()) == ("scream", 0.6)
+    assert ST.load("fire", 120).size == (120, 120)
+
+
+def test_media_scan_assign_and_footage_frame(tmp_path):
+    import subprocess
+    from PIL import Image
+    from rvs.media import assign, build_background, scan
+    from rvs.engine import Camera
+    md = tmp_path / "media"
+    md.mkdir()
+    Image.new("RGB", (900, 1400), (40, 90, 160)).save(md / "a.jpg")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=2", "-f", "lavfi", "-i",
+                    "mandelbrot=size=640x360:rate=30", "-filter_complex", "[1]trim=duration=2[m];[0][m]concat=n=2:v=1[v]", "-map", "[v]",
+                    "-pix_fmt", "yuv420p", str(md / "clip.mp4")], check=True, timeout=120)
+    proj = {"beats": [{"role": "hook", "say": "a b c d"}, {"role": "line", "say": "e f g h"}]}
+    cat = scan(proj, tmp_path, tmp_path / "work")
+    assert cat["items"]["media/clip.mp4"]["kind"] == "video" and len(cat["items"]["media/clip.mp4"]["shots"]) >= 1
+    voice = {"duration": 6.0, "spans": [{"beat": 0, "t0": 0.1, "t1": 2.9}, {"beat": 1, "t0": 3.0, "t1": 5.9}],
+             "words": [{"show": c, "t0": 0.1 + i * 0.7, "t1": 0.6 + i * 0.7, "beat": 0 if i < 4 else 1} for i, c in enumerate("abcdefgh")]}
+    plan = assign(proj, cat, voice)
+    assert set(plan) == {0, 1}
+    d = D.generate({"title": "m", "category": "facts", "beats": []}, None)
+    fb = build_background(plan[0], tmp_path, d)
+    cam = Camera("push", 0.05, 3.0).bind(0.5)
+    fr = fb.render(cam, 0.5)
+    assert fr.size == (W, H)
+
+
+def test_viral_captions_progressive_reveal():
+    from PIL import Image
+    from rvs.captions import Captioner
+    d = D.generate({"title": "c", "category": "facts", "beats": [], "dna": {"caption_style": "viral"}}, None)
+    words = [{"show": w, "say": w, "t0": 0.2 + i * 0.4, "t1": 0.5 + i * 0.4, "beat": 0} for i, w in enumerate(["ek", "do", "teen"])]
+    cap = Captioner(words, d)
+    assert cap.style == "viral" and cap.px >= 88
+    f1, f2 = Image.new("RGBA", (W, H), (0, 0, 0, 255)), Image.new("RGBA", (W, H), (0, 0, 0, 255))
+    cap.render(f1, 0.3)
+    cap.render(f2, 1.1)
+    a1, a2 = (np.asarray(f)[1000:1600, :, :3].astype(int).sum() for f in (f1, f2))
+    assert a2 > a1 * 1.5  # more words visible later
+
+
+def test_cli_new_feedback_refs(tmp_path, monkeypatch):
+    monkeypatch.setenv("RVS_HOME", str(tmp_path / "home"))
+    from PIL import Image
+    from rvs.cli import main
+    main(["new", "product", str(tmp_path / "p")])
+    pj = json.loads((tmp_path / "p" / "project.json").read_text(encoding="utf-8"))
+    assert pj["category"] == "product"
+    refs = tmp_path / "refs"
+    refs.mkdir()
+    Image.new("RGB", (540, 960), (240, 230, 220)).save(refs / "light.png")
+    main(["refs", str(refs)])
+    t = json.loads((tmp_path / "home" / "taste.json").read_text())
+    assert t["refs"] and t["weights"]["tone"]["light"] > 0
+    work = tmp_path / "p" / "work"
+    work.mkdir()
+    (work / "dna.json").write_text(json.dumps(D.generate(pj, None)))
+    main(["feedback", str(tmp_path / "p"), "--approve", "--note", "nice"])
+    t = json.loads((tmp_path / "home" / "taste.json").read_text())
+    assert t["notes"][-1]["note"] == "nice"

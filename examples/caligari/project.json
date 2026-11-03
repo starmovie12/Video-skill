@@ -17,7 +17,8 @@
     "out_of": 5,
     "where_to_watch": "Internet Archive (free, public domain)",
     "sources": [
-      "Poster: Wikimedia Commons, 'The Cabinet of Doctor Caligari Movie poster.jpg', Public domain (Lionel S. Reiss, 1920)"
+      "Poster: Wikimedia Commons, 'The Cabinet of Doctor Caligari Movie poster.jpg', Public domain (Lionel S. Reiss, 1920)",
+      "Film stills: Wikimedia Commons, public domain (see media/credits.json)"
     ]
   },
   "assets": {
@@ -51,8 +52,7 @@
   },
   "voice": {
     "engine": "auto",
-    "voice": "hi-IN-MadhurNeural",
-    "rate": "+18%"
+    "preset": "hindi_male"
   },
   "beats": [
     {
@@ -63,7 +63,12 @@
       "hero": [
         "106",
         "daravni"
-      ]
+      ],
+      "media": [
+        "media/Caligari_1920_still_02.jpg",
+        "media/Cabinet_caligari_1920.jpg"
+      ],
+      "sticker": "scream"
     },
     {
       "id": "intro",
@@ -80,7 +85,8 @@
           "Horror",
           "Silent"
         ]
-      }
+      },
+      "media": "media/The_Cabinet_of_Doctor_Caligari_Lobby_card_2.jpg"
     },
     {
       "id": "story",
@@ -96,7 +102,11 @@
           "Neend mein chalta aadmi",
           "Shehar mein qatl"
         ]
-      }
+      },
+      "media": [
+        "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__03.jpg",
+        "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__01.jpg"
+      ]
     },
     {
       "id": "cast",
@@ -110,14 +120,29 @@
         "cast": [
           {
             "name": "Werner Krauss",
-            "role": "Dr. Caligari"
+            "role": "Dr. Caligari",
+            "image": "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__04.jpg",
+            "image_focus": [
+              0.17,
+              0.17,
+              0.43,
+              0.5
+            ]
           },
           {
             "name": "Conrad Veidt",
-            "role": "Cesare"
+            "role": "Cesare",
+            "image": "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__04.jpg",
+            "image_focus": [
+              0.54,
+              0.02,
+              0.79,
+              0.33
+            ]
           }
         ]
-      }
+      },
+      "media": "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__04.jpg"
     },
     {
       "id": "proscons",
@@ -132,7 +157,8 @@
         "cons": [
           "Silent film, dheemi lagegi"
         ]
-      }
+      },
+      "media": "media/Cabinet_caligari_1920.jpg"
     },
     {
       "id": "opinion",
@@ -142,7 +168,8 @@
       "hero": [
         "DNA",
         "Horror"
-      ]
+      ],
+      "media": "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__03.jpg"
     },
     {
       "id": "rating",
@@ -154,7 +181,8 @@
         "out_of": 5,
         "label": "MERI RATING",
         "say_at": "saadhe"
-      }
+      },
+      "media": "media/The_Cabinet_of_Doctor_Caligari_Lobby_card_2.jpg"
     },
     {
       "id": "verdict",
@@ -169,7 +197,8 @@
         "verdict": "MUST WATCH",
         "rating": 4.5,
         "where": "Internet Archive"
-      }
+      },
+      "media": "media/Publicity_still_for_The_Cabinet_of_Dr._Caligari__1920__01.jpg"
     },
     {
       "id": "cta",
@@ -182,7 +211,8 @@
       "data": {
         "question": "Sabse purani horror film kaun si dekhi?",
         "cta": "FOLLOW"
-      }
+      },
+      "media": "media/Caligari_1920_still_02.jpg"
     }
   ]
 }

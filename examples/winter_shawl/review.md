@@ -1,16 +1,15 @@
 # Self-review — winter_shawl
 
-Reviewed by opening `contact_sheet.jpg` and the per-scene frames of the final render.
+Reviewed by opening the contact sheet and per-scene frames of the final render (v2 engine).
 
 ## What works
-- A soft boutique look (light paper background, Marcellus serif, sparkles, underline captions), totally different from the dark cinema reels.
-- The ₹ price tag swings in with physics, and the old price gets a stroke-draw strike-through.
-- Short (19 s) and paced for a shop reel.
+- A soft boutique look (light paper, Tenor serif, sparkles, underline captions), clearly different from the reviews.
+- The ₹ price tag swings with physics; the old price gets struck through.
 
 ## Weaknesses
-- DEMO data: the 'product' is a procedural fabric swatch, not a real photo. A real promo needs the operator's product photo (assets.product).
-- The hook's first 0.3 s shows only one calm word ('SARDI'). The split-reveal panels last 0.12 s, which is a weak pattern-interrupt for a product reel.
-- The soft grey blobs in the paper background look slightly muddy.
+- DEMO data and NO product photos: the 'shawl' is a procedural fabric swatch. This is the weakest example on purpose — a real promo needs the operator's photos in media/.
+- Graphic-only scenes look empty next to the footage-based examples.
+- The light-theme hook text is thin (Tenor) and looks faint while it fades in.
 
 ## Next time
 - Fix the weaknesses above before the next video in this category.

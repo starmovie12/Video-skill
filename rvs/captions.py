@@ -1,5 +1,7 @@
 """captions.py — big, word-synced, animated captions built from the SPOKEN words (exact TTS word timings).
-7 styles chosen by Style DNA: pill | pop_color | box_line | highlighter | glow | outline_bold | underline. Always inside safe zones."""
+9 styles chosen by Style DNA: viral | viral_box | pill | pop_color | box_line | highlighter | glow | outline_bold | underline.
+'viral' = the TikTok/Reels look: heavy uppercase, thick outline, words revealed as spoken, active word coloured + bounce.
+Always inside safe zones."""
 from __future__ import annotations
 
 import re
@@ -20,8 +22,10 @@ class Captioner:
     def __init__(self, words: list[dict], dna: dict, base_px: int | None = None):
         self.dna, self.p, self.F = dna, dna["palette"], dna["fonts"]
         self.style = dna["caption_style"]
-        self.case = "upper" if self.style in ("outline_bold", "pop_color", "pill") and dna.get("caption_case", "auto") != "lower" else "any"
-        self.px = base_px or {"pill": 76, "pop_color": 80, "box_line": 72, "highlighter": 74, "glow": 76, "outline_bold": 82, "underline": 74}[self.style]
+        self.case = "upper" if self.style in ("outline_bold", "pop_color", "pill", "viral", "viral_box") and dna.get("caption_case", "auto") != "lower" else "any"
+        self.px = base_px or {"pill": 80, "pop_color": 84, "box_line": 76, "highlighter": 78, "glow": 80, "outline_bold": 86, "underline": 78,
+                              "viral": 92, "viral_box": 88}[self.style]
+        self.hot = dna.get("caption_hot") or ("#FFE135" if self.style == "viral" else dna["palette"]["accent"])
         self.y = CAP_Y.get(dna.get("caption_pos", "low"), 1330)
         self.groups = self._group([w for w in words if w.get("caption", True)])
         self.cache = {}
@@ -35,7 +39,8 @@ class Captioner:
             nxt = words[i + 1] if i + 1 < len(words) else None
             gap = (nxt["t0"] - w["t1"]) if nxt else 9
             chars = sum(len(x["show"]) for x in cur)
-            if (len(cur) >= maxw or chars >= 15 or gap > 0.32 or PUNCT_BREAK.search(w["show"]) or not nxt
+            initial = bool(re.match(r"^\w{1,2}\.$", w["show"]))  # "F." "W." initials stay together
+            if (len(cur) >= maxw or chars >= 15 or gap > 0.32 or (PUNCT_BREAK.search(w["show"]) and not initial) or not nxt
                     or nxt.get("beat") != w.get("beat")):
                 groups.append(cur)
                 cur = []
@@ -55,12 +60,15 @@ class Captioner:
         p, st = self.p, self.style
         texts = [apply_case(re.sub(r"[,.;:!?।]+$", "", w["show"]), self.case) or w["show"] for w in g["words"]]
         px = self.px
-        stroke = {"outline_bold": 0.13, "pill": 0.07, "pop_color": 0.08, "glow": 0.0, "box_line": 0.0, "highlighter": 0.0, "underline": 0.06}[st]
+        stroke = {"outline_bold": 0.13, "pill": 0.07, "pop_color": 0.08, "glow": 0.0, "box_line": 0.0, "highlighter": 0.0, "underline": 0.06,
+                  "viral": 0.15, "viral_box": 0.12}[st]
         dark_text = st == "highlighter" or (st == "box_line" and not self.dna["tone"] != "light")
         base_col = p["text"] if self.dna["tone"] != "light" or st in ("outline_bold", "pill", "pop_color", "underline") else p["text"]
         light = self.dna["tone"] == "light"
-        if st in ("outline_bold", "pill", "pop_color", "underline", "glow"):
-            base_col = "#FFFFFF" if not light else p["text"]
+        if st in ("outline_bold", "pill", "pop_color", "underline", "glow", "viral", "viral_box"):
+            base_col = "#FFFFFF" if not light or st.startswith("viral") else p["text"]
+        if st.startswith("viral"):
+            light = False  # viral captions are always white + black outline (readable on any footage)
         shadow = (0, 6, 10, 0.75, "#000000") if not light else (0, 4, 8, 0.25, "#000000")
         sc_col = "#000000" if not light else "#FFFFFF"
         while True:
@@ -72,13 +80,16 @@ class Captioner:
             gap = px * 0.4
             total = sum(widths) + gap * (len(widths) - 1)
             if total <= (CAP_X1 - CAP_X0) or px <= 60:
+                if st.startswith("viral") and len(texts) <= 2 and total < 0.55 * (CAP_X1 - CAP_X0) and px < self.px * 1.3:
+                    px += 8  # short groups get BIGGER (punchier), up to +30 %
+                    continue
                 break
             px -= 4
-        act_col = {"pill": p["ink"], "pop_color": p["accent"], "box_line": p["accent"], "highlighter": p["ink"], "glow": p["accent"],
+        act_col = {"viral": self.hot, "viral_box": "#FFFFFF", "pill": p["ink"], "pop_color": p["accent"], "box_line": p["accent"], "highlighter": p["ink"], "glow": p["accent"],
                    "outline_bold": p["accent"] if gfx_contrast_ok(p["accent"]) else "#FFE14D", "underline": "#FFFFFF" if not light else p["accent"]}[st]
         act = [text_sprite(t, self.F["caption"], px, deva_fid=self.F["deva"], color=act_col, box=(5000, 900), max_lines=1,
-                           stroke=0.0 if st in ("pill", "highlighter") else stroke, stroke_color=sc_col,
-                           shadow=None if st in ("pill", "highlighter") else shadow,
+                           stroke=0.0 if st in ("pill", "highlighter") else stroke, stroke_color=sc_col if st != "viral_box" else "#000000",
+                           shadow=None if st in ("pill", "highlighter", "viral_box") else shadow,
                            glow=(14, 0.9, p["accent"]) if st == "glow" else None, role="caption") for t in texts]
         xs = []
         x = (CAP_X0 + CAP_X1) / 2 - total / 2
@@ -121,6 +132,17 @@ class Captioner:
             b = R["box"] if k > 0.995 and a > 0.99 else alpha_mult(R["box"].resize((max(1, int(R["box"].width * k)), max(1, int(R["box"].height * k)))), a)
             blit(frame, b, (CAP_X0 + CAP_X1) / 2 - b.width / 2, y - b.height / 2)
         # moving pill / highlighter / underline under the active word
+        if ai is not None and st == "viral_box":
+            w0 = g["words"][ai]
+            ph, pw = int(R["px"] * 1.3), int(R["widths"][ai] + R["px"] * 0.45)
+            key = ("vbox", ai)
+            im = R["cache"].get(key) or R["cache"].setdefault(key, gfx.card(pw, ph, fill=p["accent"] if p["accent"] else "#E63946", kind="rounded",
+                                                                                 r=int(ph * 0.2)).rotate(-3 + 6 * (ai % 2), expand=True,
+                                                                                                         resample=Image.Resampling.BICUBIC))
+            pop = 1 + 0.18 * (1 - clamp((t - w0["t0"]) / 0.18))
+            im2 = im.resize((max(1, int(im.width * pop * k)), max(1, int(im.height * pop * k))), Image.Resampling.BILINEAR)
+            cxb = (CAP_X0 + CAP_X1) / 2 + (R["xs"][ai] - (CAP_X0 + CAP_X1) / 2) * k
+            blit(frame, alpha_mult(im2, a), cxb - im2.width / 2, y - im2.height / 2 + R["px"] * 0.05)
         if ai is not None and st in ("pill", "highlighter", "underline"):
             w0 = g["words"][ai]
             q = spring(t - w0["t0"] + 0.03, 30, 0.7)
@@ -146,10 +168,14 @@ class Captioner:
                 im = R["cache"].get(key) or R["cache"].setdefault(key, gfx.card(int(ww), uh, fill=p["accent"], kind="pill"))
                 blit(frame, alpha_mult(im, a), cx - im.width / 2, y + R["px"] * 0.62)
         for i, (sn, sa) in enumerate(zip(R["norm"], R["act"])):
+            if st == "viral" and (ai is None or i > ai):
+                continue  # progressive reveal: words appear as they are spoken
             is_act = i == ai
             spr = sa if is_act else sn
             s = k
-            if is_act and st in ("pop_color", "outline_bold", "glow"):
+            if is_act and st in ("viral", "viral_box"):
+                s *= 1 + 0.25 * max(0.0, 1 - (t - g["words"][i]["t0"]) / 0.16) - 0.05 * min(1.0, max(0.0, (t - g["words"][i]["t0"] - 0.16) / 0.1)) + 0.05
+            elif is_act and st in ("pop_color", "outline_bold", "glow"):
                 s *= 1 + 0.12 * (1 - clamp((t - g["words"][i]["t0"]) / 0.22)) + 0.04
             alpha = a * (1.0 if (is_act or st not in ("glow",)) else 0.78)
             if i > (ai if ai is not None else -1) and st in ("pop_color", "glow", "outline_bold"):

@@ -148,6 +148,13 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
     cap_words = sum(len(g["words"]) for g in tl.captions.groups)
     spoken_cap = sum(1 for w in voice["words"] if tl.scenes[w["beat"]].meta["captions"])
     chk("captions_cover_speech", cap_words == spoken_cap, f"{cap_words}/{spoken_cap}", "every spoken word in caption beats is captioned (word-synced)")
+    # footage + stickers (advisory): real visuals and emoji accents are what make Reels feel edited, not slideshow-like
+    foot = sum(1 for sc in tl.scenes if getattr(sc.bg, "dynamic", False))
+    n_media = len(getattr(tl, "assets", {}).get("media_segments") or {}) if hasattr(tl, "assets") else foot
+    chk("footage_coverage", foot >= 0.7 * len(tl.scenes) or not n_media, f"{foot}/{len(tl.scenes)} scenes on real footage",
+        "with media supplied, ≥70 % of scenes sit on real footage/stills", hard=False)
+    stick = sum(1 for sc in tl.scenes for ly in sc.layers if getattr(ly, "role", "") == "sticker")
+    chk("stickers", stick >= 1 or tl.dna.get("sticker_rate", 0) < 0.2, stick, "≥1 emoji sticker accent (unless the DNA chose none)", hard=False)
     # script quality (advisory but reported)
     text = " ".join((b.get("show") or b.get("say") or "") for b in project["beats"]).lower()
     cl = [c for c in CLICHES if c in text]

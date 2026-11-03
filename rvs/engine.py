@@ -84,7 +84,7 @@ class Layer:
             a *= clamp(dt / 0.10)
         elif e == "slam":
             q = spring(dt, m["omega"] * 1.5, max(0.45, m["zeta"]))
-            k = 1 + 1.4 * (1 - q)
+            k = 1 + (1.4 if self.sprite.w < 600 else 0.55) * (1 - q)  # wide words slam less (stay on screen)
             sx *= k
             sy *= k
             a *= clamp(dt / 0.06)
@@ -188,7 +188,11 @@ class Layer:
         x, y, sx, sy, r, a, rev = st
         X, Y, Z, R = cam.apply(x, y, self.z)
         sx, sy, r = sx * Z, sy * Z, r + R
-        key = (id(spr), round(sx, 3), round(sy, 3), round(r, 1), int(a * 40), round(rev, 3))
+        big = spr.w * spr.h > 250_000
+        q = 1.0 if big else 2.0  # big sprites rotate in 1° steps (bilinear), small ones in 0.5° steps (bicubic)
+        r = round(r * q) / q if abs(r) >= 0.5 else 0.0  # sub-degree jitter (camera shake) is invisible but very expensive to rotate
+        sx, sy = round(sx * 200) / 200, round(sy * 200) / 200  # 0.5 % scale steps → cache hits during idle "breathe"
+        key = (id(spr), sx, sy, r, int(a * 40), round(rev, 3))
         img = self.cache.get2(key)
         if img is None:
             img = spr.img
@@ -203,15 +207,15 @@ class Layer:
                     img = img.crop((0, 0, w, ch)) if d[1] >= 0 else img.crop((0, h - ch, w, h))
             if abs(sx - 1) > 0.002 or abs(sy - 1) > 0.002:
                 img = img.resize((max(1, int(img.width * abs(sx))), max(1, int(img.height * abs(sy)))), Image.Resampling.BILINEAR)
-            if abs(r) > 0.05:
-                img = img.rotate(-r, Image.Resampling.BICUBIC, expand=True)
+            if r:
+                img = img.rotate(-r, Image.Resampling.BILINEAR if big else Image.Resampling.BICUBIC, expand=True)
             img = alpha_mult(img, a)
             self.cache.put(key, img)
         # anchor: wipe keeps the un-revealed anchor
         bw, bh = spr.w * abs(sx), spr.h * abs(sy)
         ox = X - spr.ax * bw
         oy = Y - spr.ay * bh
-        if abs(r) > 0.05:
+        if r:
             ox, oy = X - img.width / 2, Y - img.height / 2
         elif rev < 0.999 and self.enter_dir[0] < 0:
             ox += bw - img.width
@@ -436,7 +440,7 @@ class Scene:
         self.ensure()
         t = tg - self.t0
         self.cam.bind(t)
-        fr = self.bg.render(self.cam)
+        fr = self.bg.render(self.cam, t) if getattr(self.bg, "dynamic", False) else self.bg.render(self.cam)
         for ly in self.layers:
             ly.render(fr, t, self.cam)
         for fn in self.post:

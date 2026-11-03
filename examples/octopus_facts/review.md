@@ -1,16 +1,16 @@
 # Self-review — octopus_facts
 
-Reviewed by opening `contact_sheet.jpg` and the per-scene frames of the final render.
+Reviewed by opening the contact sheet and per-scene frames of the final render (v2 engine).
 
 ## What works
-- Bright, punchy facts look (mid-tone blue, pill captions, brackets) that is clearly different from the movie reviews.
-- Every claim is specific (3 hearts, copper/hemocyanin, ~2/3 of neurons in the arms).
-- Kinetic lines are balanced (no 2-word leftover pages) and big.
+- Five CC-licensed octopus photos with credits; every scene is on a real image.
+- Viral captions (word-by-word, yellow active word), countdown opening, brain/blood stickers on the right words.
+- Big, readable stat (~67%) and compare layout over the footage.
 
 ## Weaknesses
-- Typography only: there is no octopus imagery. A facts video would be stronger with a licensed or illustrated visual.
-- In split_compare the divider line and VS chip slightly cross the first subtitle ('hemoglobin · laal khoon').
-- The grid_tech background is a little plain for 25 seconds.
+- The countdown opening (3-2-1) spends the first half-second on numbers instead of the shocking claim.
+- The split_compare subtitles are small over a busy reef photo.
+- CC BY-SA credits must go into the caption (the upload pack lists them); the operator must not skip that.
 
 ## Next time
 - Fix the weaknesses above before the next video in this category.

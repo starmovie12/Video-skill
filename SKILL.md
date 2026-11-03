@@ -1,26 +1,38 @@
 ---
 name: review-video-studio
-description: Makes motion-designed 9:16 Instagram Reels and YouTube Shorts in Hinglish (movie reviews, product or boutique promos, facts, stories, software and game videos), with a new look for every video. Each video gets its own Style DNA (palette from the poster, fonts, layouts, motion, transitions, captions, music), word-synced animated captions, original music and sound effects, and a design QA that blocks ugly or repeated output. Use when the user asks to make, create or render a reel, short, review video, product video or facts video, or says "video banao".
+description: Makes edited 9:16 Instagram Reels and YouTube Shorts in Hinglish (movie reviews, product or boutique promos, facts, stories, software and game videos) that look different every time. Real footage and stills go full-screen with fast cuts on spoken words, motion graphics, 3D emoji stickers, viral word-synced captions, an energetic voice (free neural, ElevenLabs, or the operator's own recording), music that cuts on the beat, and a design QA that blocks ugly or repeated output. Use when the user asks to make, create or render a reel, short, review video, product video or facts video, or says "video banao".
 ---
 
 # Review Video Studio
 
-You are the **Director** of every video, not a template filler. The engine in `rvs/` renders real motion design: spring physics, parallax camera, kinetic type, 13 designed transitions, frosted glass, word-synced captions, procedural music and designed SFX. It does that fast: about 1 minute for a 45–60-second Reel on 4 CPU cores (measured: a 43.8 s review took 53 s end to end).
+You are the **Director** of every video, not a template filler. The engine in `rvs/` does the editing:
+- **Footage:** real footage and stills full-screen, a new shot every ~2 s, cuts landing on spoken words.
+- **Motion:** camera punches, flashes and light leaks; spring motion graphics; 13 designed transitions.
+- **Stickers and captions:** 3D emoji stickers, and viral captions that reveal word by word.
+- **Sound:** procedural music that cuts on the beat, designed SFX, and a broadcast voice chain.
 
-Your job is the thinking the engine cannot do: research, script, the visual screenplay, and an honest look at the frames.
+It renders a 45–60-second Reel in about 1–2 minutes on 4 CPU cores.
+
+Your job is what the engine cannot do: research, script, **choosing the visuals by looking at them**, the visual screenplay, and an honest look at the frames.
 
 ## Non-negotiable rules
 
-1. **Hook first.** Beat 1 has `role: "hook"`. Never open with a greeting ("namaste doston", "hello guys", "aaj hum"). Open with the most surprising true claim, number, contradiction or question. The engine adds a visual pattern-interrupt in frame 1.
-2. **Every video looks different.** Never copy `dna` from an earlier project. The Variety Ledger (`~/.rvs/ledger.json`) forces each new Style DNA to differ from the last videos, and QA fails if frames look too similar to the past.
-3. **Zero invented facts.** Every factual claim (year, cast, box office, price, spec) comes from a source you actually checked. List the sources in `facts.sources`. Opinions are labelled as opinions ("meri raay", "mujhe laga"). If you cannot verify something, cut it.
-4. **Look before you claim.** Never say "done", "looks great" or "QA passed" until you have opened (Read) the contact sheet and at least 4 frame PNGs yourself. Then write `work/review.md` with honest weaknesses. `deliver` refuses to run without it.
-5. **Never deliver a QA FAIL.** Fix the cause (script length, missing data, layout) and re-run. You get at most 2 fix iterations. After that, report honestly what still fails.
-6. **Rights.**
-   - Use posters and stills only if the operator supplied them, they come from an official press kit or public-domain source, or the operator accepts the risk. Record the source.
-   - Never show one person's face under another person's name. Give a cast member a `focus` box only if *that* person's face is in the image; otherwise the engine draws an honest monogram.
-   - No third-party cartoon or anime characters.
-7. **Speed.** Do not render the full video to "see what happens". Run `proof` first (seconds), look, fix, then run `make` once.
+1. **Hook first.** Beat 1 has `role: "hook"`. Never open with a greeting ("namaste doston", "hello guys", "aaj hum"). Open with the most surprising true claim, number, contradiction or question.
+2. **Real visuals over typography.** A Reel with footage or stills behind the graphics beats text on a background every time. Always gather media (step 2) before writing the visual plan. Use graphic-only mode only when there truly is no usable image.
+3. **Every video looks different.** Never copy `dna` from an earlier project. The Variety Ledger (`~/.rvs/ledger.json`) forces each new Style DNA to differ from the last videos, and QA fails if frames look too similar to the past.
+4. **Zero invented facts.** Every factual claim (year, cast, box office, price, spec) comes from a source you actually checked. List the sources in `facts.sources`. Opinions are labelled as opinions ("meri raay"). If you cannot verify something, cut it.
+5. **Look before you claim.**
+   - Open (Read) `media_sheet.jpg` before assigning media.
+   - Open `proof_contact_sheet.png` before `make`.
+   - Open the final contact sheet and 4+ frames before saying anything is done.
+   - `deliver` refuses to run without an honest `work/review.md`.
+6. **Never deliver a QA FAIL.** Fix the cause and re-run, at most 2 fix iterations. After that, report honestly what still fails.
+7. **Rights.**
+   - **New films:** posters, stills and trailer clips are copyrighted. Use only what the operator supplied or official press material, and tell the operator about the risk.
+   - **Free media:** `media search` downloads only Public Domain, CC0, CC BY or CC BY-SA images from Wikimedia Commons, with credits. The upload pack lists the credits, and CC BY / BY-SA require them in the caption.
+   - **Faces:** never show one person's face under another person's name. A cast face needs `image` + `image_focus` (or a poster `focus`) that really shows *that* person; otherwise the engine draws a monogram.
+   - **Characters:** no third-party cartoon or anime characters.
+8. **Speed.** Do not render the full video to "see what happens". Run `proof` first, look, fix, then run `make` once.
 
 ## Setup (first time only)
 
@@ -32,56 +44,106 @@ pip install -r requirements.txt
 python run.py doctor
 ```
 
-`doctor` must show ffmpeg, ffprobe and raqm as true. raqm does the Devanagari shaping.
+`doctor` must show ffmpeg, ffprobe and raqm (Devanagari shaping) as true.
 
-- **Voice:** edge-tts is the default; it is free, needs internet, and gives exact word timings. If edge-tts is unreachable the engine falls back to Kokoro (offline; set `RVS_KOKORO_MODEL` and `RVS_KOKORO_VOICES`), then espeak-ng.
-- **Termux:** run `pkg install python ffmpeg` and `pip install numpy pillow edge-tts`. It works, but use `--workers 2`.
+Optional extras:
+- `pip install faster-whisper` aligns the operator's own voice, or any external TTS, to exact words. The model downloads once to `~/.rvs/whisper`.
+- `ELEVENLABS_API_KEY` plus `voice.voice_id` gives the most natural premium voice, with exact word timing.
+- **Termux:** `pkg install python ffmpeg` then `pip install numpy pillow edge-tts fonttools`. Use `--workers 2`.
 
-## Workflow (do these steps in order)
+## Workflow (in order)
 
 ### 1. Research (facts with sources)
-- **Movie:** title, year, director, 2–3 cast and their roles, genre, where to watch (only if verified), and one specific scene or detail that makes the review non-generic.
+- **Movie:** title, year, director, 2–3 cast with roles, genre, where to watch (verified), and one specific scene or detail.
 - **Product:** facts come from the operator (name, fabric, colours, price). Never invent prices or discounts.
-- **Facts videos:** use only claims you can cite.
+- **Facts / story:** only claims you can cite.
 
-### 2. Assets: decide where the poster goes
-- Put the poster or still in the project folder and set `assets.poster`.
-- **Open the image yourself** and write `assets.focus`: a list of normalized boxes `[x0, y0, x1, y1]` for faces and key art. The engine uses them for:
-  - backgrounds (zoomed and blurred),
-  - story thumbnails,
-  - filmstrips,
-  - cast crops.
-- Do **not** add the title-text block as a focus box, or backgrounds will repeat the title.
-- For each cast member whose face is visible, add `"focus": [...]` in `data.cast[i]`.
-- No poster? That is fine. The engine builds premium poster-free looks (mesh, spotlight, paper, grid, bokeh), never a rainbow gradient.
-- **Product:** set `assets.product` to a photo with a transparent or clean background if available.
+### 2. Media: real visuals (the biggest quality lever)
+Create `<project>/media/`. Put everything there:
+- the operator's trailer or clip files (`.mp4`, `.mov`, `.webm`),
+- stills,
+- product photos (several angles),
+- B-roll.
 
-### 3. Script (you write `project.json`)
-Start from `templates/<category>.json` (`python run.py new movie_review my_film`).
+**No media from the operator?**
+- For facts, story or old films, fetch free-licence images:
+  ```bash
+  python run.py media search <project> "<english query>" --n 8
+  ```
+  Use a precise query, e.g. "Octopus vulgaris", "Max Schreck Nosferatu".
+- Scan the folder and build the sheet:
+  ```bash
+  python run.py media scan <project>
+  ```
+  This detects the shots in every clip and writes `out/media_sheet.jpg`. Every still and shot is labelled, e.g. `media/trailer.mp4#3 12.4-15.1s`.
+
+**Open media_sheet.jpg and look at it.** Then decide per beat which visual shows the line's meaning:
+- `"media": "media/trailer.mp4#3"`: one shot.
+- `"media": "media/trailer.mp4@41.2-44.0"`: an exact range.
+- `"media": "media/still.jpg"`: a still, which gets Ken Burns motion and camera punches.
+- `"media": ["media/a.jpg", "media/b.mp4#5"]`: several. The engine cuts between them at spoken words.
+- `"media": "none"`: graphic-only beat.
+- Omit `media`: auto. Shots and stills are distributed by score, and long beats get a new shot every ~2.2 s.
+
+Guidelines:
+- Hook = the most striking image (a face, an action, a shock).
+- Cast beat = a shot of that actor.
+- Verdict = the most iconic frame.
+- Skip title cards, black frames and blurry shots.
+
+**Cast faces:** `data.cast[i].image` = a still showing that actor, and `image_focus` = `[x0,y0,x1,y1]` around *their* face. Open the image to find it.
+
+**Poster:** `assets.poster` + `assets.focus` boxes (faces and key art; never the title block). It is used for the title card and the cover.
+
+### 3. Voice: choose it with the operator
+- Run `python run.py voices <project>`. It renders the hook in every free preset (+ ElevenLabs if a key is set) to `out/voice_samples/`. Send these to the operator and set `voice.preset`.
+
+| preset | voice | note |
+|---|---|---|
+| `hindi_male` (default) | hi-IN-MadhurNeural, +20%, −2 Hz | clearest Hindi (Whisper intelligibility 0.88, measured) |
+| `hindi_female` | hi-IN-SwaraNeural, +16% | 0.89; default for product |
+| `multi_male2` | en-US-BrianMultilingualNeural | most conversational, slight accent (0.87) |
+| `multi_male` / `multi_female` | Andrew / Ava Multilingual | expressive, accented Hindi |
+
+- **Premium:** set `"voice": {"engine": "elevenlabs", "voice_id": "...", "model": "eleven_multilingual_v2"}` with `ELEVENLABS_API_KEY` in the environment. Timing comes from character alignment and is exact.
+- **Operator's own voice** (the most authentic option):
+  - Set `"voice": {"engine": "recording", "file": "voice.m4a"}` for one take of the whole script, read in beat order.
+  - Or use per-beat files: `beats[i].audio`. Any external TTS works this way with `"engine": "files"`.
+  - Whisper aligns the words (measured mean error ≈ 0.15 s).
+- **Reel pacing** (default `pacing: "reel"`):
+  - pauses longer than 0.2 s are cut to 0.13 s; `…`, `?` and `!` keep 0.3 s;
+  - a 0.16 s dramatic beat is added before each hero word;
+  - beat gaps are 70–320 ms.
+
+  Use `"pacing": "natural"` to keep the raw timing.
+
+### 4. Script (you write `project.json`)
+Start from `templates/<category>.json`: `python run.py new movie_review my_film`.
 - **Each beat:**
-  - `say`: what the TTS speaks. Use Devanagari for Hindi words; English brand words may stay in Latin script.
-  - `show`: Roman Hinglish caption with the **same number of words** as `say`, for exact word sync.
-- **Length:** about 2.5 spoken words per second at the default energetic pace (+18%). Example: 45 s ≈ 110 words. `target_sec` is enforced. The engine adjusts speed within +10…+32%; bigger misses must be fixed in the script.
-- **Script craft:**
-  - Hook ≤ 12 words.
-  - One specific detail per beat (a scene, number, name or comparison).
-  - One strong, quotable opinion.
-  - One open loop ("ending pe twist hai…").
-  - End with a comment question that loops back to the hook.
+  - `say`: what the TTS speaks. Use Devanagari for Hindi; English brand words may stay in Latin script.
+  - `show`: the Roman Hinglish caption with the **same number of words**.
+- **Length:** ~2.6 spoken words/s at the default pace. 45 s ≈ 115 words. `target_sec` is enforced (±10%). The voice is re-timed within +10…+32%; bigger misses must be fixed in the script.
+- **Craft:**
+  - hook ≤ 12 words;
+  - one specific detail per beat;
+  - one quotable opinion;
+  - one open loop;
+  - end with a comment question that loops to the hook.
 - **Banned clichés** (lint flags them): paisa vasool, hollywood level, mind blowing, next level, goosebumps, edge of the seat, one time watch.
-- `hero`: 1–2 words per beat that carry the meaning. The visual hits exactly when those words are spoken: slam, camera punch and SFX.
+- **`hero`:** 1–2 words per beat. The visual hits exactly when they are spoken (slam, camera punch, SFX, dramatic pause).
+- **`sticker`** (optional): a 3D emoji name from `assets/stickers/`, or `"none"`. Without it, stickers are matched from the words: daravni→😱, twist→🤯, paisa→💰, khoon→🩸, sardi→❄️ …
 
-### 4. Visual screenplay (the Director's thinking)
-For every beat, decide what the line *means* and pick the visual that shows it.
+### 5. Visual screenplay (the Director's thinking)
+For every beat decide what the line *means* and which media plus graphic shows it. The graphics sit on top of the beat's footage.
 
 | role (beat) | archetype | variants | data needed |
 |---|---|---|---|
 | hook | `hook_slam` | opening = word_smash / poster_punch / rating_first / question_flash / split_reveal / countdown | – (spoken words become giant kinetic type) |
 | intro / title | `poster_hero` | tilt_card / full_bleed / framed | `title`, `chips` (needs poster) |
 | story / plot | `story_panels` | stack / filmstrip / split | `points` (2–3 short phrases) |
-| cast | `cast_spotlight` | portraits / lower_third / big_name | `cast: [{name, role, focus?}]` |
-| pros_cons | `pros_cons` | cards / balance (a beam that tilts as pros/cons land) | `pros`, `cons` |
-| opinion / quote | `quote_kinetic` | – | – (spoken words) |
+| cast | `cast_spotlight` | portraits / lower_third / big_name | `cast: [{name, role, image?, image_focus?}]` |
+| pros_cons | `pros_cons` | cards / balance (short points only) | `pros`, `cons` |
+| opinion / quote | `quote_kinetic` | – | – |
 | rating | `rating_meter` | ring / bars / giant | `rating`, `out_of`, `say_at` |
 | verdict | `verdict_stamp` | stamp / seal / neon | `verdict`, `rating`, `where` |
 | cta | `cta_loop` | – | `question`, `cta` |
@@ -96,116 +158,104 @@ For every beat, decide what the line *means* and pick the visual that shows it.
 | chapter | `chapter_title` | – | `number`, `title` |
 | line (anything else) | `kinetic_line` | stack / diagonal | – |
 
-- Set `"archetype": "auto"` (or omit it) to let the engine pick by role.
-- Set `"variant"` to force a layout.
-- QA requires the following:
-  - **Distinct layouts:** ≥ 5 in a movie review, ≥ 3 otherwise.
-  - **No repeats:** no archetype twice in a row, and at most 2 uses per 60 s.
-- Never give a card role without its data. Lint stops you, because empty cards are banned.
+QA requires:
+- **Distinct layouts:** ≥ 5 in a movie review (≥ 3 otherwise).
+- **No repeats:** no archetype twice in a row, and at most 2 uses per minute.
+- **No empty cards:** a card role always comes with its data. Lint stops you otherwise.
 
 **Starter structures**
-- **Movie review, 45–60 s:** hook → intro (poster) → story → cast → pros_cons → opinion → rating → verdict → cta
-- **Product, 15–25 s:** hook → product → features → price → cta
+- **Movie review, 45–60 s:** hook → intro → story → cast → pros_cons → opinion → rating → verdict → cta
+- **Product, 15–25 s:** hook → product → features → price → cta. Use many product photos in `media/`.
 - **Facts, 25–40 s:** hook → fact → compare / stat → line → cta
 - **Story, 40–60 s:** hook → chapter → line → timeline → quote → cta
-- **Software / game:** hook → title / fact → features → stat → verdict → cta
 
-**Style DNA overrides (optional):** add `"dna": {...}` only when you have a creative reason, such as an operator brand colour or a reference look. Any DNA dimension can be forced:
-- `tone`: dark / light / mid
-- `background`, `background2`
-- `motif`
-- `motion`: snappy / elastic / smooth / heavy / glitchy
-- `transitions`: a list
-- `caption_style`: pill / pop_color / box_line / highlighter / glow / outline_bold / underline
-- `opening`
-- `card_shape`
-- `layout_align`
-- `music_mood`
-- `fonts: {hero, support, caption, deva}`
+**Style DNA overrides (optional, only with a creative reason):** `"dna": {...}` can force any of:
+- `tone`, `background`, `background2`, `motif`, `motion`, `transitions`, `opening`, `card_shape`, `layout_align`, `music_mood`, `fonts`, `sticker_rate`
+- `caption_style`: viral / viral_box / pill / pop_color / box_line / highlighter / glow / outline_bold / underline
+- `caption_hot`: the active-word colour of viral captions
 
-Leave everything else to the generator so the ledger can keep videos different.
+### 6. Music
+Choose one:
+- **Default:** original procedural music, composed to the timeline. Moods: epic_trailer, dark_pulse, phonk, hype_trap, upbeat_pop, synthwave, lofi_soft, ambient_luxe, playful_pluck. The mood is bound to the genre or category, transitions hit on the beat, and the verdict gets the drop.
+- **Operator's licensed track:** set `assets.music` (+ `assets.music_start`). The engine detects the BPM and phase, and cuts snap to its beats (±0.2 s).
+- **Trending Instagram audio** often gives the best reach: `make` always also writes `<id>_no_music.mp4` (voice + SFX only). The operator adds the trending sound in-app at 10–15% volume.
 
-### 5. Lint
+### 7. Lint, then Proof (look before scaling up)
 ```bash
-python run.py lint <project_dir>
+python run.py lint <project>
 ```
-Fix every error. Read the warnings, especially pacing and clichés.
 
-### 6. Proof (5–8 s + key frames). Look before scaling up.
 ```bash
-python run.py proof <project_dir>
+python run.py proof <project>
 ```
+
 1. **Read** `work/proof_contact_sheet.png` and at least 4 PNGs in `work/proof_frames/`.
-2. Write `work/proof_review.md` covering:
-   - Is the hook visually striking in the first second?
-   - Is text big and readable on a phone?
-   - Is anything empty, cramped, overlapping or off-brand?
-   - Does each frame show the *meaning* of its line?
-3. Fix project.json, or run `proof --reroll` for a fresh Style DNA, and repeat at most twice.
-4. If the operator asked to approve the look first, send them `out/proof.mp4` and the contact sheet, then wait.
+2. Write `work/proof_review.md`:
+   - Is the first second striking?
+   - Is text readable over the footage?
+   - Is anything covered, cramped or empty?
+   - Does each frame show its line's meaning?
+3. Fix, or run `proof --reroll` for a fresh DNA, at most twice.
+4. If the operator wants to approve first, send `out/proof.mp4` + the sheet and wait.
 
-### 7. Make (full render + mix + QA)
+### 8. Make (full render + mix + QA + deliverables)
 ```bash
-python run.py make <project_dir>
+python run.py make <project>
 ```
-- **Outputs:**
-  - `out/<id>.mp4` (1080×1920, 30 fps, H.264 + AAC, −14 LUFS),
-  - `out/<id>_contact_sheet.png`,
-  - `out/<id>_qa.md`,
-  - `work/make_summary.json`.
-- Exit code 3 means QA FAIL. Read `work/qa_report.md`, fix the cause, and run again.
+Outputs in `out/`:
+- `<id>.mp4` (1080×1920, 30 fps, −14 LUFS)
+- `<id>_no_music.mp4`
+- `cover_9x16.jpg` + `cover_grid_4x5.jpg`
+- `<id>_upload_pack.md` (caption draft, hashtags, credits, checklist)
+- `<id>_contact_sheet.png`
+- `<id>_qa.md`
 
-### 8. Honest self-review (required)
-Open the contact sheet and 4+ frames from `work/qa_frames/`, then write `work/review.md`:
+Exit code 3 means QA FAIL: read `work/qa_report.md`, fix, re-run.
+
+### 9. Honest self-review (required), then deliver
+Open the contact sheet + 4 frames from `work/qa_frames/`, then write `work/review.md`:
 ```markdown
 ## What works
 - ...
 ## Weaknesses
-- (at least 2 real, specific weaknesses — e.g. "cast scene has monograms, no real photos", "price tag text is small")
+- (≥2 real, specific weaknesses)
 ## Next time
 - ...
 ```
 
-### 9. Deliver
 ```bash
-python run.py deliver <project_dir>
+python run.py deliver <project>
 ```
+
 Give the operator:
-- the mp4 path,
-- the upload pack: caption (hook line + 3 lines + question), 5–8 hashtags, and the best cover frame time from the contact sheet,
+- both mp4s,
+- the cover,
+- the upload pack: rewrite the caption in your own words and keep the facts exact,
 - your honest weaknesses.
 
 ### 10. Learn
-- **Operator liked or disliked the video:**
-  ```bash
-  python run.py feedback <project_dir> --approve --note "..."
-  ```
-  Use `--reject` instead of `--approve` for a dislike.
-- **Operator shares reference images or videos:** put them in a folder, then run:
-  ```bash
-  python run.py refs <folder>
-  ```
-  This learns brightness, palette and cut pace. **Also open the images yourself**, describe their layout and type scale, and turn that into `dna` overrides for the next project.
-- **Post-upload results** (watch-through, shares): record them with `feedback --note`. Approved looks get weighted up; rejected ones get weighted down.
+- **Liked or disliked:** run `python run.py feedback <project> --approve --note "..."`. Use `--reject` for a dislike.
+- **Reference images or videos from the operator:** run `python run.py refs <folder>`. It learns brightness, palette and cut pace. **Also open them yourself** and turn what you see into `dna` overrides.
+- **Post-upload results:** record them with `feedback --note`.
 
 ## What QA measures (hard failures block delivery)
 - **Duration:** within ±10% of the target.
-- **Layouts:** ≥ 5 distinct frame designs in a movie review; no consecutive repeats; at most 2 uses of an archetype per minute.
-- **Transitions:** a designed transition at every cut.
+- **Layouts:** ≥ 5 distinct designs in a movie review, with no consecutive repeats.
+- **Transitions:** at every cut.
 - **Text size:** hero ≥ 56 px, body ≥ 40 px, captions ≥ 64 px.
-- **Safe zones:** all critical text inside the Reels safe area (y 225–1495, right edge ≤ 1000 below y = 1000).
-- **Motion:** a visible visual event at least every 2.5 s.
-- **Hook:** ≥ 20% of the frame changes in the first 1.5 s, and the hook is not a greeting.
-- **Distinct frames:** visually distinct scene frames (perceptual hash).
-- **Flat fills:** no banding or flat fills.
-- **Audio:** loudness −14 ± 1.5 LUFS, true peak ≤ −0.8 dBTP; music present; SFX on events.
-- **Captions:** every spoken caption word is captioned.
-- **Variety:** the Style DNA differs from each of the last 5 videos on ≥ 4 of 12 dimensions, and frames differ from past videos.
+- **Safe zones:** y 225–1495, right edge ≤ 1000 below y = 1000; no collision with captions.
+- **Motion:** a visible event at least every 2.5 s.
+- **Hook:** a real interrupt in the first 1.5 s, and no greeting.
+- **Frames:** visually distinct; no banding.
+- **Audio:** −14 ± 1.5 LUFS; music present; SFX on events.
+- **Captions:** every spoken word is captioned.
+- **Variety:** differs from past videos in both DNA and frames.
 
-Dead space and clichés are reported as warnings.
+Warnings: dead space, clichés, footage coverage (< 70% of scenes on footage when media exists), stickers.
 
 ## Troubleshooting
-- **edge-tts fails:** check internet. Behind a TLS proxy, set `SSL_CERT_FILE` (it is used automatically). Otherwise use Kokoro (`"voice": {"engine": "kokoro"}`).
-- **Captions look wrong in Devanagari:** set `caption_script: "devanagari"`, and `doctor` must show `raqm: true`.
-- **Too slow:** run `make --workers <cores>`. Proofs render only the first `proof_sec` seconds.
-- **A look you dislike:** run `make --reroll`, or set one `dna` override. Never hand-edit `work/dna.json` to copy an old video.
+- **edge-tts fails:** check internet. Behind a TLS proxy, set `SSL_CERT_FILE`. Fallbacks: `"engine": "kokoro"` (offline) or your own recording.
+- **Commons returns 429:** wait a minute. The tool already backs off and asks only for standard thumbnail sizes.
+- **Footage text hard to read:** the scrim and outlines are automatic. Pick calmer shots for text-heavy beats (pros/cons, story).
+- **Too slow:** run `make --workers <cores>`. Footage beats cost about 2× graphic beats.
+- **A look you dislike:** run `make --reroll`, or set one `dna` override.

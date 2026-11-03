@@ -138,5 +138,9 @@ Status values:
 | P-64 | Poster-card chips with a long name ran off the right edge | Chips wrap into rows inside the safe width |
 | P-65 | `words.json` / `voice` reported the preset rate instead of the rate actually used after duration control | The effective rate is recorded |
 | P-66 | The line motif (`slashes`) crossed actors' faces on footage beats | SKILL.md: choose a quiet motif (`dust`, `light_rays`, `film_perfs`) for face-heavy stills |
+| P-67 | VS split: the upper side's sub-label sat on the divider and the VS badge covered it | Each side's block is centred in its own zone, kept clear of the badge + divider |
+| P-68 | Cast portraits with 3 people: a 2-line name + role chip ran into the next row's circle | Circle size follows the row slot; name + chip block is centred on its row and fits between neighbouring rings |
+| P-69 | List items low on the screen reached x≈1050 (Reels buttons zone) | Items below y=1000 use the low safe width |
+| P-70 | A stat beat whose number is spoken late showed one still for 4 s (QA static run) | SKILL.md: give such beats two media so a cut lands before the counter |
 
 Tests: 18 → 20 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`).

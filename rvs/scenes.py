@@ -804,8 +804,12 @@ def cast_spotlight(ctx: Ctx, sc):
         return add_motif(ctx, sc)
     # portraits: alternating rows, circle + name block, ring stroke-draws on
     n = len(cast)
-    size = 360 if n >= 2 else 460
     slot = (bot - top) / n
+    # rows alternate sides, so a row's name block sits beside the NEXT row's circle: size the circles so every name block
+    # (name + role chip, ≥ ~220 px) fits between the neighbouring rings and never runs into them
+    size = int(max(200, min(360 if n >= 2 else 460, 2 * slot - 284))) if n >= 2 else 460
+    ring_r = (size + 40) / 2 + 12
+    text_h = (2 * (slot - ring_r)) if n >= 2 else 420
     for i, (c, ti) in enumerate(zip(cast, times)):
         y = top + slot * (i + 0.5)
         left = i % 2 == 0
@@ -817,16 +821,20 @@ def cast_spotlight(ctx: Ctx, sc):
             return q, lambda: Sprite(gfx.ring(size + 40, 10, q, p["accent"]), 0.5, 0.5)
         sc.add(DynLayer(ring_fn, xc, y, z=1.0, t_in=ti + 0.05, enter="none", motion=ctx.motion, role="deco"))
         bw_ = W - size - 2 * SAFE["left"] - 90
-        nm = ctx.hero(c["name"], (bw_, 260), max_lines=2, max_px=130, align="left" if left else "right", role="hero")
+        rl = ctx.chip(c["role"], fill=p["accent"], color=p["ink"], px=38) if c.get("role") else None
+        chip_h = (rl.h + 10) if rl is not None else 0
+        nm = ctx.hero(c["name"], (bw_, max(90, min(260, text_h - chip_h))), max_lines=2, max_px=130, align="left" if left else "right",
+                      role="hero")
+        nh = nm.h - 2 * nm.meta["pad"]
+        y_top = y - (nh + chip_h) / 2  # name + chip block centred on the row
         if left:
             nm.ax, nx = 0.0, xc + size / 2 + 50 - nm.meta["pad"]
         else:
             nm.ax, nx = 1.0, xc - size / 2 - 50 + nm.meta["pad"]
-        sc.add(ctx.layer(nm, nx, y - 30, z=1.0, t_in=ti + 0.15, enter="slide", enter_dir=(1 if not left else -1, 0), role="hero"))
-        if c.get("role"):
-            rl = ctx.chip(c["role"], fill=p["accent"], color=p["ink"], px=38)
+        sc.add(ctx.layer(nm, nx, y_top + nh / 2, z=1.0, t_in=ti + 0.15, enter="slide", enter_dir=(1 if not left else -1, 0), role="hero"))
+        if rl is not None:
             rx = nx + rl.w / 2 if left else nx - rl.w / 2
-            sc.add(ctx.layer(rl, rx, y + nm.h / 2 - nm.meta["pad"] + 10, z=1.0, t_in=ti + 0.3, enter="pop", role="label"))
+            sc.add(ctx.layer(rl, rx, y_top + nh + 10 + rl.h / 2, z=1.0, t_in=ti + 0.3, enter="pop", role="label"))
         sc.cue(ti, "pop", 0.6)
     add_motif(ctx, sc)
 
@@ -1084,9 +1092,11 @@ def list_reveal(ctx: Ctx, sc):
         num = text_sprite(str(i + 1), ctx.F["hero"], int(min(240, slot * 0.9)), color=p["accent"], box=(3000, 3000), max_lines=1,
                           shadow=ctx.shadow(), role="label")
         sc.add(ctx.layer(num, SAFE["left"] + 80, y, z=1.0, t_in=ti, enter="slam" if ctx.motion == "heavy" else "pop", role="label"))
-        t = ctx.body(it, (760, slot * 0.8), max_lines=2, max_px=96, min_px=48, align="left")
+        x_t = SAFE["left"] + 180
+        r_lim = SAFE["right_low"] if y + slot * 0.4 > SAFE["low_from"] else SAFE["right_top"]  # lower items avoid the Reels buttons
+        t = ctx.body(it, (min(760, r_lim - x_t - 60), slot * 0.8), max_lines=2, max_px=96, min_px=48, align="left")
         t.ax = 0.0
-        sc.add(ctx.layer(t, SAFE["left"] + 180, y, z=1.0, t_in=ti + 0.12, enter="wipe", enter_dir=(1, 0), role="body"))
+        sc.add(ctx.layer(t, x_t, y, z=1.0, t_in=ti + 0.12, enter="wipe", enter_dir=(1, 0), role="body"))
         sc.cue(ti, "pop", 0.6)
     add_motif(ctx, sc)
 
@@ -1100,21 +1110,24 @@ def split_compare(ctx: Ctx, sc):
     tl, tr = ctx.t_word(left.get("title"), 0.05), ctx.t_word(right.get("title"), 0.45)
     top, bot = ctx.top, ctx.bottom
     half = (bot - top) / 2
-    for side, d, ti, yc, col in ((left, -1, tl, top + half * 0.5, p["text"]), (right, 1, tr, top + half * 1.5, p["accent"])):
-        t = ctx.hero(side.get("title", ""), (900, half * 0.62), max_lines=2, max_px=200, color=col)
-        sub_h = 0
+    vs = ctx.chip("VS", fill=p["accent"], color=p["ink"], px=96, shape="pill")
+    clear = vs.h / 2 + 34  # each side's block stays clear of the VS badge + the tilted divider
+    zones = ((top, top + half - clear), (top + half + clear, bot))
+    for side, d, ti, (z0, z1), col in ((left, -1, tl, zones[0], p["text"]), (right, 1, tr, zones[1], p["accent"])):
+        sb, sub_h, gap = None, 0, 0
         if side.get("sub"):
             sb = ctx.body(side["sub"], (880, 90), px=54, color=p["muted"], role="label", max_lines=1)
-            sub_h = sb.h - 2 * sb.meta["pad"]
-        y_t = yc - sub_h / 2 - 10
-        sc.add(ctx.layer(t, W / 2, y_t, z=1.0, t_in=ti, enter="slide", enter_dir=(d, 0), role="hero"))
-        if side.get("sub"):
-            sc.add(ctx.layer(sb, W / 2, y_t + t.h / 2 - t.meta["pad"] + sub_h / 2 + 18, z=1.0, t_in=ti + 0.2, enter="rise", role="label"))
+            sub_h, gap = sb.h - 2 * sb.meta["pad"], 18
+        t = ctx.hero(side.get("title", ""), (900, max(90, min(half * 0.62, (z1 - z0) - sub_h - gap))), max_lines=2, max_px=200, color=col)
+        th = t.h - 2 * t.meta["pad"]
+        y0 = z0 + max(0, ((z1 - z0) - (th + gap + sub_h)) / 2)
+        sc.add(ctx.layer(t, W / 2, y0 + th / 2, z=1.0, t_in=ti, enter="slide", enter_dir=(d, 0), role="hero"))
+        if sb is not None:
+            sc.add(ctx.layer(sb, W / 2, y0 + th + gap + sub_h / 2, z=1.0, t_in=ti + 0.2, enter="rise", role="label"))
         sc.cue(ti, "swish", 0.7)
     line = Image.new("RGBA", (900, 8), rgba(p["accent"], 230))
     sc.add(ctx.layer(Sprite(line.rotate(-6, expand=True, resample=Image.Resampling.BICUBIC), 0.5, 0.5), W / 2, top + half, z=0.95,
                      t_in=(tl + tr) / 2 - 0.1, enter="wipe", enter_dir=(1, 0), enter_dur=0.35, role="deco"))
-    vs = ctx.chip("VS", fill=p["accent"], color=p["ink"], px=96, shape="pill")
     sc.add(ctx.layer(vs, W / 2, top + half, z=1.1, t_in=(tl + tr) / 2, enter="slam", role="label"))
     sc.cue((tl + tr) / 2, "hit", 0.9)
     sc.cam.punch((tl + tr) / 2 + 0.05, 0.04)

@@ -85,6 +85,13 @@ Create `<project>/media/`. Put everything there:
 - `"media": "none"`: graphic-only beat.
 - Omit `media`: auto. Shots and stills are distributed by score, and long beats get a new shot every ~2.2 s.
 
+A still can also be a dict, so a few wide stills can be used in several ways:
+- **Zoom crop (cover):** `{"file": "media/still.jpg", "crop": [x0,y0,x1,y1]}` — normalised box. It fills the 9:16 frame: a punch-in on one face or detail.
+- **Letterbox:** `{"file": "media/still.jpg", "fit": "letterbox"}` — the whole wide frame stays sharp over a blurred copy of itself. Wide stills (aspect > 1.25) do this automatically when no crop is given.
+- **Low-resolution stills** (e.g. under ~600 px tall): use letterbox. A cover crop of them is blurry.
+- **Letterbox position:** add `"y": 0.62` to move the sharp band lower when the beat's big text sits in the upper half, so text never covers faces (default 0.46). Crop + letterbox together zooms in but keeps the image's full height.
+- **Variety:** never put the same file on two consecutive beats. Alternate crops and letterbox of the same still between non-adjacent beats.
+
 Guidelines:
 - Hook = the most striking image (a face, an action, a shock).
 - Cast beat = a shot of that actor.
@@ -173,6 +180,9 @@ QA requires:
 - `tone`, `background`, `background2`, `motif`, `motion`, `transitions`, `opening`, `card_shape`, `layout_align`, `music_mood`, `fonts`, `sticker_rate`
 - `caption_style`: viral / viral_box / pill / pop_color / box_line / highlighter / glow / outline_bold / underline
 - `caption_hot`: the active-word colour of viral captions
+
+Changing `dna` after a `proof` takes effect on the next run. The cached `work/dna.json` is regenerated whenever the overrides differ. With the same overrides it is reused, so the look stays stable between proof and make.
+- **Motif over faces:** when a still's faces are the point (actor stills, posters), prefer a quiet motif such as `dust`, `light_rays` or `film_perfs`. Line motifs like `slashes` cross the faces.
 
 ### 6. Music
 Choose one:

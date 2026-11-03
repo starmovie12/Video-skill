@@ -225,3 +225,41 @@ def test_cli_new_feedback_refs(tmp_path, monkeypatch):
     main(["feedback", str(tmp_path / "p"), "--approve", "--note", "nice"])
     t = json.loads((tmp_path / "home" / "taste.json").read_text())
     assert t["notes"][-1]["note"] == "nice"
+
+
+def test_still_crop_letterbox_and_band_position(tmp_path):
+    """Dict media refs carry crop / fit / y; letterbox keeps the whole wide frame sharp and `y` moves the band."""
+    from PIL import Image
+    from rvs.media import MARGIN, StillSource, parse_ref
+    md = tmp_path / "media"
+    md.mkdir()
+    im = Image.new("RGB", (1600, 600), (20, 20, 20))
+    im.paste((250, 250, 250), (0, 250, 1600, 350))  # bright stripe across the middle of the wide still
+    im.save(md / "wide.jpg")
+    cat = {"items": {"media/wide.jpg": {"kind": "image"}}}
+    ref = parse_ref({"file": "media/wide.jpg", "fit": "letterbox", "y": 0.7, "crop": [0, 0, 1, 1]}, cat)
+    assert ref["fit"] == "letterbox" and ref["y"] == 0.7 and ref["crop"] == [0, 0, 1, 1]
+    bh = int(H * MARGIN)
+
+    def band_row(y):
+        a = np.asarray(StillSource(md / "wide.jpg", fit="letterbox", y=y).img.convert("L"), np.float32)
+        return int(np.argmax(a.mean(axis=1))) / bh
+    lo, hi = band_row(0.3), band_row(0.7)
+    assert abs(lo - 0.3) < 0.05 and abs(hi - 0.7) < 0.05
+    assert abs(band_row(None) - 0.46) < 0.05  # default position unchanged
+    # wide stills letterbox automatically; a crop switches to cover (punch-in)
+    assert StillSource(md / "wide.jpg").fit == "letterbox"
+    assert StillSource(md / "wide.jpg", crop=[0.4, 0, 0.6, 1]).fit == "cover"
+
+
+def test_dna_overrides_invalidate_cached_dna(tmp_path, monkeypatch):
+    """Changing project.json `dna` overrides after a proof must not be ignored because work/dna.json exists."""
+    monkeypatch.setenv("RVS_HOME", str(tmp_path / "home"))
+    from rvs.cli import stage_dna
+    proj = {"title": "m", "category": "facts", "beats": []}
+    d1 = stage_dna(proj, tmp_path, tmp_path)
+    other = next(m for m in D.MOTIFS if m != d1["motif"])
+    d2 = stage_dna(dict(proj, dna={"motif": other, "caption_style": "viral"}), tmp_path, tmp_path)
+    assert d2["motif"] == other and d2["caption_style"] == "viral"
+    d3 = stage_dna(dict(proj, dna={"motif": other, "caption_style": "viral"}), tmp_path, tmp_path)
+    assert d3 == d2  # same overrides → cache reused

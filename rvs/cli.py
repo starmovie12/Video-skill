@@ -47,10 +47,14 @@ def stage_dna(p, root, work, reroll=False):
     from .dna import generate
     from .timeline import load_assets
     f = work / "dna.json"
+    over = p.get("dna") or {}
     if f.exists() and not reroll:
-        return read_json(f)
+        d = read_json(f)
+        if d.get("_overrides", {}) == over:  # cached DNA is only valid for the same project.json overrides
+            return d
     assets = load_assets(p, root)
     d = generate(p, assets.get("poster"), seed_extra=str(time.time()) if reroll else "")
+    d["_overrides"] = over
     write_json(f, d)
     return d
 

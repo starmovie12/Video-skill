@@ -127,3 +127,16 @@ Status values:
 | P-58 | Pros/cons balance chips overflowed the frame with long points | FIXED | Balance only for short points; chips width-bounded and clamped |
 | P-59 | Story cards clipped two-line text | FIXED | Thumbnail left, text vertically centred over the full card height |
 | P-60 | Camera-shake rotation made every frame re-rotate big sprites (slow) | FIXED | Rotation threshold + quantisation, bilinear for big sprites |
+
+## v2.1 — found while making the first real long-form Reel (KING, 3:18)
+
+| # | Problem seen in the proof frames | Fix |
+|---|---|---|
+| P-61 | Only 5 wide film stills for a 27-beat, 3-minute video, so the same image would repeat | Dict media refs: `crop` (zoom cover), `fit: letterbox` (whole frame sharp over a blurred copy), `y` (band position). One still yields 3–4 different shots |
+| P-62 | In letterbox mode the big kinetic text covered faces in the sharp band | `y` places the band lower (e.g. 0.62–0.64) when the text sits on top |
+| P-63 | `dna` overrides in project.json were ignored after the first proof (cached `work/dna.json`) | The cache is keyed by the overrides and regenerated when they change |
+| P-64 | Poster-card chips with a long name ran off the right edge | Chips wrap into rows inside the safe width |
+| P-65 | `words.json` / `voice` reported the preset rate instead of the rate actually used after duration control | The effective rate is recorded |
+| P-66 | The line motif (`slashes`) crossed actors' faces on footage beats | SKILL.md: choose a quiet motif (`dust`, `light_rays`, `film_perfs`) for face-heavy stills |
+
+Tests: 18 → 20 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`).

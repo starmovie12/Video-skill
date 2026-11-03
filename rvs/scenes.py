@@ -550,13 +550,30 @@ def poster_hero(ctx: Ctx, sc):
     y_chip = (y_t + t.h / 2 - t.meta["pad"] + 50) if not (v == "framed" and ctx.poster is not None) else bot - 30
     sprs = [ctx.chip(c, fill=p["accent"] if i == 0 else mix_hex(p["bg1"], p["text"], 0.14), color=p["ink"] if i == 0 else p["text"], px=40)
             for i, c in enumerate(chips[:3])]
-    total = sum(s_.w for s_ in sprs) + 18 * (len(sprs) - 1)
-    x = SAFE["left"] + 10 if ctx.align == "left" else W / 2 - total / 2
+    # wrap chips into rows that fit the safe width (long names never run off the right edge)
+    avail = SAFE["right_low"] - SAFE["left"] - 20
+    rows, cur, cw = [], [], 0.0
     for i, s_ in enumerate(sprs):
-        tt = ctx.t_word(chips[i], at=t_title + 0.35 + 0.18 * i)
-        sc.add(ctx.layer(s_, x + s_.w / 2, min(y_chip, bot - s_.h / 2), z=1.0, t_in=tt, enter="pop", role="label"))
-        sc.cue(tt, "tick", 0.45)
-        x += s_.w + 18
+        need = s_.w + (18 if cur else 0)
+        if cur and cw + need > avail:
+            rows.append(cur)
+            cur, cw, need = [], 0.0, s_.w
+        cur.append(i)
+        cw += need
+    if cur:
+        rows.append(cur)
+    row_h = (max(s_.h for s_ in sprs) + 14) if sprs else 0
+    y_row = min(y_chip, bot - (sprs[0].h / 2 if sprs else 0) - row_h * (len(rows) - 1))
+    for row in rows:
+        total = sum(sprs[i].w for i in row) + 18 * (len(row) - 1)
+        x = SAFE["left"] + 10 if ctx.align == "left" else W / 2 - total / 2
+        for i in row:
+            s_ = sprs[i]
+            tt = ctx.t_word(chips[i], at=t_title + 0.35 + 0.18 * i)
+            sc.add(ctx.layer(s_, x + s_.w / 2, y_row, z=1.0, t_in=tt, enter="pop", role="label"))
+            sc.cue(tt, "tick", 0.45)
+            x += s_.w + 18
+        y_row += row_h
     add_motif(ctx, sc)
 
 

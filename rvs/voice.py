@@ -498,7 +498,7 @@ def synth_voice(project: dict, work: Path, rate_override: str | None = None) -> 
             log(f"voice: engine {eng} failed → {type(e).__name__}: {str(e)[:200]}")
     if used is None:
         raise RvsError("TTS_FAIL", f"all TTS engines failed: {last_err}")
-    return _assemble(project, vcfg, beats, clips, used, timing, work)
+    return _assemble(project, dict(vcfg, rate=base_rate), beats, clips, used, timing, work)
 
 
 def _recorded(project, vcfg, beats, work, lang, clips) -> str:

@@ -141,7 +141,13 @@ def media_sheet(cat: dict, out: Path) -> Path | None:
 REF = re.compile(r"^(?P<file>.+?)(?:#(?P<shot>\d+)|@(?P<a>[\d.]+)-(?P<b>[\d.]+))?$")
 
 
-def parse_ref(ref: str, cat: dict) -> dict | None:
+def parse_ref(ref, cat: dict) -> dict | None:
+    """'media/x.mp4#3' | 'media/x.mp4@12-15' | 'media/x.jpg' | {"file": ..., "crop": [x0,y0,x1,y1], "fit": "cover"|"letterbox", "y": band centre}."""
+    if isinstance(ref, dict):
+        base = parse_ref(ref["file"], cat)
+        if base is None:
+            return None
+        return dict(base, **{k: ref[k] for k in ("crop", "fit", "y") if k in ref})
     m = REF.match(ref.strip())
     if not m or m.group("file") not in cat["items"]:
         return None
@@ -212,14 +218,43 @@ def assign(project: dict, cat: dict, voice: dict, seg_target=2.2) -> dict[int, l
 
 # ───────────────────────── sources ─────────────────────────
 class StillSource:
+    """A still on the 9:16 plate.
+    cover     — fill the frame (optionally from a `crop` region [x0,y0,x1,y1], normalised) — punch-in on a face/detail.
+    letterbox — keep the WHOLE wide shot sharp across the frame, over a blurred, darkened copy of itself (the standard way to
+                show 16:9 / 2.39:1 film frames in a vertical Reel). Auto for very wide images unless a crop is given.
+                `y` = vertical centre of the sharp band (0…1, default 0.46); push it down (≈0.62) when the scene's big
+                text sits in the upper half, so the text never covers faces."""
     baked = True  # the legibility scrim is baked into the plate once (saves a full-frame composite per frame)
 
-    def __init__(self, path: Path, focus=(0.5, 0.4), scrim: Image.Image | None = None):
+    def __init__(self, path: Path, focus=(0.5, 0.4), scrim: Image.Image | None = None, crop=None, fit=None, y=None):
+        from PIL import ImageEnhance, ImageFilter
         bw, bh = int(W * MARGIN), int(H * MARGIN)
-        self.img = ImageOps.fit(Image.open(path).convert("RGB"), (bw, bh), Image.Resampling.LANCZOS, centering=focus)
+        src = Image.open(path).convert("RGB")
+        if crop:
+            x0, y0, x1, y1 = crop
+            src = src.crop((int(x0 * src.width), int(y0 * src.height), int(x1 * src.width), int(y1 * src.height)))
+        fit = fit or ("letterbox" if (not crop and src.width / src.height > 1.25) else "cover")
+        if fit == "letterbox":
+            back = ImageOps.fit(src, (bw // 4, bh // 4), Image.Resampling.BILINEAR, centering=focus).filter(ImageFilter.GaussianBlur(9))
+            back = ImageEnhance.Brightness(ImageEnhance.Color(back).enhance(1.25)).enhance(0.5).resize((bw, bh), Image.Resampling.BICUBIC)
+            fw = int(bw * 1.0)
+            fh = int(fw * src.height / src.width)
+            if fh > bh * 0.62:  # very tall: limit height
+                fh = int(bh * 0.62)
+                fw = int(fh * src.width / src.height)
+            fg = src.resize((fw, fh), Image.Resampling.LANCZOS)
+            cy = min(1 - fh / 2 / bh, max(fh / 2 / bh, float(y) if y is not None else 0.46))  # keep the band inside the plate
+            back.paste(fg, ((bw - fw) // 2, int(bh * cy - fh / 2)))
+            self.img = back
+        else:
+            self.img = ImageOps.fit(src, (bw, bh), Image.Resampling.LANCZOS, centering=focus)
+        self.fit = fit
         if scrim is not None:
             im = self.img.convert("RGBA")
-            im.alpha_composite(scrim.resize((bw, bh), Image.Resampling.BILINEAR))
+            sc = scrim.resize((bw, bh), Image.Resampling.BILINEAR)
+            if fit == "letterbox":  # lighter scrim: the sharp band must stay bright
+                sc.putalpha(sc.getchannel("A").point(lambda v: int(v * 0.7)))
+            im.alpha_composite(sc)
             self.img = im.convert("RGB")
 
     def frame(self, tau):
@@ -316,7 +351,11 @@ def build_background(segs, root: Path, dna: dict, dark=True, focus=(0.5, 0.4)):
     fb = FootageBackground([], scrim=0.62 if dark else 0.35, dark=dark)
     for t, s in segs:
         p = root / s["file"]
-        fb.segments.append((t, StillSource(p, focus, fb.scrim) if s["kind"] == "image" else ClipSource(p, s["start"], s["end"], s.get("need", 2.0), grade)))
+        if s["kind"] == "image":
+            src = StillSource(p, focus, fb.scrim, crop=s.get("crop"), fit=s.get("fit"), y=s.get("y"))
+        else:
+            src = ClipSource(p, s["start"], s["end"], s.get("need", 2.0), grade)
+        fb.segments.append((t, src))
     return fb
 
 

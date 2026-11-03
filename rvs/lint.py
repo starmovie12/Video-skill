@@ -35,7 +35,7 @@ def lint(p: dict, root=None):
     for i, b in enumerate(beats):  # media references must exist (the Director picks them from media_sheet.jpg)
         refs = b.get("media")
         for r in (refs if isinstance(refs, list) else [refs] if refs and refs not in ("auto", "none") else []):
-            f = str(r).split("#")[0].split("@")[0]
+            f = (r["file"] if isinstance(r, dict) else str(r)).split("#")[0].split("@")[0]
             if root is not None and not (root / f).exists():
                 errs.append(f"{b.get('id', i)}: media '{f}' not found (run `media scan` and copy a label from media_sheet.jpg)")
         for c in (b.get("data") or {}).get("cast", []) or []:

@@ -96,6 +96,8 @@ def cmd_proof(a):
     tl = build_timeline(p, root, voice, dna)
     write_json(work / "plan.json", tl.summary())
     times = key_times(tl)
+    for old in (work / "proof_frames").glob("*.png"):  # stale frames from an earlier proof would mislead the review / handover
+        old.unlink()
     frames = save_frames(tl, times, work / "proof_frames", "proof")
     contact_sheet(frames, work / "proof_contact_sheet.png", [f"{t:.1f}s" for t in times])
     sec = float(p.get("proof_sec", 6.0))
@@ -304,6 +306,27 @@ def cmd_new(a):
           + (f" · channel defaults: {ch['name']} ({ch['handle']}), {p.get('target_sec')} s reel" if ch else ""))
 
 
+def cmd_handover(a):
+    """Prompt 3 (adapted): the reel handover PDF from the research brief, script pack and the engine's proof frames."""
+    from .deliver import make_cover
+    from .handover import build
+    root, pj, work, out = _paths(a.project)
+    p = load_project(pj)
+    try:  # cover preview with the real cover builder (cached voice + DNA; no render)
+        voice = stage_voice(p, work)
+        dna = stage_dna(p, root, work)
+        tl = build_timeline(p, root, voice, dna)
+        tmp = work / "cover_tmp"
+        cov = make_cover(tl, p, tmp)
+        shutil.copy(cov["cover"], work / "cover_preview.jpg")
+    except Exception as e:  # the PDF still builds from the hook frame
+        log(f"handover: cover preview skipped ({e})")
+    res = build(root, html_only=a.html_only)
+    res["next"] = ("OPEN every page (work/handover_pages/page-*.png or all_pages.png), fix what is cut or overflowing, then send the PDF "
+                   "and WAIT for 'continue' before `make`")
+    print(json.dumps(res, indent=1, ensure_ascii=False))
+
+
 def cmd_channel(a):
     from .channel import brief
     print(json.dumps(brief(), indent=1, ensure_ascii=False))
@@ -353,6 +376,10 @@ def main(argv=None):
     s.add_argument("query", nargs="?", default="")
     s.add_argument("--n", type=int, default=8)
     s.set_defaults(fn=cmd_media)
+    s = sub.add_parser("handover", help="reel handover PDF (research brief + script pack + real proof frames) for the operator to read")
+    s.add_argument("project")
+    s.add_argument("--html-only", dest="html_only", action="store_true")
+    s.set_defaults(fn=cmd_handover)
     s = sub.add_parser("channel", help="channel brief: who we make videos for, today's pillar, schedule, rules, recent topics")
     s.set_defaults(fn=cmd_channel)
     s = sub.add_parser("log", help="record a video in channel/history.jsonl (made → posted → Insights numbers)")

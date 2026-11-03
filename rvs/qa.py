@@ -16,7 +16,10 @@ from .dna import DIMS, diff_count, load_ledger
 
 GREETINGS = re.compile(r"^\s*(namaste|namaskar|hello|hi+|hey|kaise ho|welcome|aaj hum|doston|dosto|guys|नमस्ते|नमस्कार|दोस्तों|आज हम)", re.I)
 CLICHES = ["paisa vasool", "hollywood level", "hollywood-level", "must watch film hai", "edge of the seat", "mind blowing", "mind-blowing",
-           "next level", "goosebumps", "slow second half", "one time watch", "blockbuster"]
+           "next level", "goosebumps", "slow second half", "one time watch", "blockbuster",
+           # kill list from prompts/2-script-doctor.md (v4)
+           "kya aapko pata hai", "chaliye shuru karte hain", "last tak dekhna", "hairan reh jaoge", "aapko hila dega",
+           "follow for more", "like karo", "share karo", "follow karo", "save karo", "comment yes"]
 
 
 def dhash(img: Image.Image, n=8) -> int:

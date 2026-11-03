@@ -111,11 +111,13 @@ def lint(project: dict, ch: dict | None = None) -> tuple[list[str], list[str]]:
         hw = _words(beats[0].get("say", ""))
         if hw > r.get("hook_max_words", 16):
             warns.append(f"CHANNEL_HOOK: the hook has {hw} words — keep it ≤ {r.get('hook_max_words', 16)} so it lands in ~2 s")
-        tail = " ".join(str(b.get("show") or b.get("say") or "") for b in beats[-2:]).lower()
-        if not any(w in tail for w in r.get("send_cta_words", [])):
-            warns.append("CHANNEL_SEND_CTA: end with a send line (e.g. 'ye us dost ko bhejo jo…') — sends drive reach to non-followers")
+        text = " ".join(str(b.get("show") or b.get("say") or "") for b in beats).lower()
+        if not any(w in text for w in r.get("send_cta_words", [])):
+            warns.append("CHANNEL_SEND_LINE: add one send-worthy line that names a kind of person ('wo dost jo hamesha…') — sends drive "
+                         "reach to non-followers (no 'share/like/follow karo')")
+        tail = " ".join(str(b.get("show") or b.get("say") or "") + " " + str((b.get("data") or {}).get("question", "")) for b in beats[-2:])
         if "?" not in tail:
-            warns.append("CHANNEL_QUESTION: end with a two-option question for comments")
+            warns.append("CHANNEL_QUESTION: the last beat needs a two-option comment question (on screen via data.question, or spoken)")
     return errs, warns
 
 

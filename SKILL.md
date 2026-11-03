@@ -37,6 +37,11 @@ The skill is set up for **Scene Samjho**, Instagram **@scene.samjho1**: Bollywoo
   4. proof → make → deliver.
   5. Log it: `python run.py log <project> --status made`, later `--status posted` with the Insights numbers.
   6. Commit + push `channel/`.
+- **Script system (operator's prompts):** for every topic, run `prompts/1-research-brief.md` → `prompts/2-script-doctor.md` (v4) → beats + `proof` → `python run.py handover <project>` (`prompts/3-pdf-handover-builder.md`, adapted). Adaptations are in `prompts/ADAPTATION.md`.
+  - The operator gets a PDF: cover, verdict and scores, final script with the voice script, Style DNA, a frame board of **real** proof frames, the cover with grid-crop guides, the build commands, the publish pack, background, QA, credits, and appendices.
+  - Look at every page PNG (`work/handover_pages/`) before sending.
+  - Wait for "continue" before `make`.
+  - **India IT Rules 2026:** an AI (TTS) voice is labelled. The channel default `disclosure: "AI voice"` prints it on the end card; also tick Instagram's AI label.
 - **Persistence:** `channel/state/` holds the variety ledger in the repo (used unless `RVS_HOME` is set), so a new chat still knows the past looks.
 - **Generic mode:** to use the engine for something else, move `channel/channel.json` away or point `RVS_CHANNEL` to another folder.
 

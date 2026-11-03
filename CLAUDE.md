@@ -20,7 +20,14 @@ Every script and video made here is for this channel. Its profile, schedule and 
 
 ## Rules that always apply
 
-- **Script first.** Research the topic on the web, then write the script MD with a source for every fact. Show it to the operator and **wait for "continue"** before rendering.
+- **Topic → PDF → "continue" → video.** When the operator names a topic or a film, run the operator's three prompts in `prompts/` the way `prompts/ADAPTATION.md` describes:
+  1. Research Brief.
+  2. Script Doctor v4 (Draft-0 → tournament → final).
+  3. Engine proof frames.
+  4. `python run.py handover <project>`. Look at every page PNG, then send the **PDF**.
+  - Render the video only after the operator writes **"continue"**.
+  - Every fact needs a source.
+  - Make the angle different from earlier packs on the same film.
 - **Reel shape:**
   - 45–60 s (hard max 90 s)
   - hook in the first 2 s

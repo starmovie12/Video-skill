@@ -157,3 +157,14 @@ Tests: 18 → 21 (`test_still_crop_letterbox_and_band_position`, `test_dna_overr
 | C-05 | "Pehle script dikhao, phir banao" | Workflow in CLAUDE.md, SKILL.md §0 and CHANNEL.md: script MD with sources → wait for "continue" → render |
 
 Tests: 21 → 23 (`test_channel_defaults_lint_hashtags`, `test_channel_log_and_brief`).
+
+## v2.3 — the operator's script system (topic → PDF → "continue" → video)
+
+| # | Operator asked / found | Fix |
+|---|---|---|
+| S-01 | "Topic do to pehle poori PDF do, phir continue par video" | `prompts/` (Research Brief v3, Script Doctor v4, PDF Handover v3) + `prompts/ADAPTATION.md`; `run.py handover` builds the PDF from the brief, the script pack and the engine's real proof frames, and rasterises every page for a visual check |
+| S-02 | Script Doctor v4 engagement rule (one CTA, voice ends on the loop line) | Channel lint accepts the on-screen question (`data.question`) and checks for a send-worthy line; `cta_loop` can drop the second chip (`comment_cta: ""`); kill-list phrases added to the cliché check |
+| S-03 | India IT Rules 2026 (synthetic content labels) | `disclosure` field (channel default "AI voice") printed with the handle on the end card |
+| S-04 | Stale proof frames from earlier runs leaked into reviews | `proof` clears `work/proof_frames/` first |
+| S-05 | A 5-item save card was cut to 4 | `list_reveal` shows up to 5 items |
+| S-06 | Poster card in the "poster_punch" opening covered the face on a poster background | Director note: use `word_smash` + letterbox `y` when the hook still is a poster |

@@ -107,10 +107,13 @@
       160
     ],
     "send_cta_words": [
-      "bhejo",
-      "send",
-      "share",
-      "tag"
+      "dost",
+      "yaar",
+      "fan",
+      "jo log",
+      "wale log",
+      "unke liye",
+      "logon ke liye"
     ],
     "hashtags_max": 5,
     "base_hashtags": [
@@ -118,7 +121,8 @@
     ],
     "cover_required": true,
     "one_topic_per_reel": true,
-    "facts_need_sources": true
+    "facts_need_sources": true,
+    "engagement_rule": "Script Doctor v4: exactly ONE explicit CTA = the two-option comment question, shown on screen over the last beat (cta_loop data.question) + caption + pinned comment; the voice ends on the loop line; one send-worthy line names a kind of person ('wo dost jo…'); never 'share / like / follow / save karo'."
   },
   "defaults": {
     "category": "movie_review",
@@ -133,16 +137,17 @@
     "dna": {
       "caption_style": "viral",
       "motif": "dust"
-    }
+    },
+    "disclosure": "AI voice"
   },
   "workflow": [
-    "1. `python run.py channel` — brief: today's pillar, both reel slots (reel_1 13:00, reel_2 19:30), stories, recent topics (never repeat one).",
-    "2. Research today's topic on the web (last 24–48 h, Bollywood + OTT). Facts only with sources.",
-    "3. Write the script MD for ONE reel at a time and SHOW IT to the operator. Wait for 'continue' before rendering. Set `slot` (reel_1 / reel_2).",
-    "4. `run.py new movie_review <dir>` (channel defaults applied) → beats → lint → proof → look → make.",
-    "5. QA PASS + review.md → deliver. Send: mp4, _no_music.mp4, cover, upload pack.",
-    "6. `run.py log <project> --status made`; after posting/24 h: `--status posted` + Insights numbers.",
-    "7. Commit + push channel/ (history + state) so the next chat remembers."
+    "1. `python run.py channel` — brief: today's pillar, both reel slots, stories, recent topics (never repeat one).",
+    "2. Topic → prompts/1-research-brief.md → <project>/pack/research-brief_<slug>.md (web research, sources with dates).",
+    "3. prompts/2-script-doctor.md (v4): Draft-0 from the brief → score → flaws → 3 angles, 3 hooks, 2 drafts → swipe test → re-audit → <project>/pack/script-pack_<slug>.md.",
+    "4. Beats into project.json (say = Devanagari, show = Roman, same word count; slot; post_date) → lint → voice → proof → look at frames, fix layout.",
+    "5. `python run.py handover <project>` (prompts/3-pdf-handover-builder.md adapted) → open every page PNG → fix → send the PDF. STOP: wait for 'continue'.",
+    "6. After 'continue': make → QA PASS + review.md → deliver → send mp4, _no_music.mp4, cover, upload pack.",
+    "7. `run.py log <project> --status made`; after posting/24 h: `--status posted` + Insights numbers. Commit + push channel/."
   ],
   "never": [
     "Raw movie clips or someone else's reel re-posted as is (Instagram originality policy)",

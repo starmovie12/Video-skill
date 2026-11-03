@@ -93,9 +93,10 @@ Timing sources:
 
 ## Prompts the operator uses
 
-- **A, topic:** "Skill activate karo. Aaj ka topic research karo aur script banao."
-  - Claude runs `run.py channel`, researches the last 24–48 h, and proposes the top 3 topics with sources.
-  - Then it picks one and writes the script MD.
+- **A, topic:** "Skill activate karo. Aaj ka topic research karo" or "<film> par reel".
+  - Claude runs `run.py channel`, researches the last 24–48 h and picks the topic.
+  - Then it runs the three-prompt system (`prompts/ADAPTATION.md`): research brief → script doctor → proof frames → **handover PDF**.
+  - The PDF goes to the operator.
 - **B, make:** "continue". Claude builds the project, renders proof → make → QA → deliver, then logs it.
 - **C, weekly review:** "Ye 7 reels ke Insights screenshots hain, review karo."
   - Claude updates `history.jsonl` with the numbers and compares hooks, pillars and lengths.

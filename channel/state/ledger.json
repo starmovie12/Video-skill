@@ -1,0 +1,164 @@
+{
+  "videos": [
+    {
+      "id": "king-tu-mil-jaaye-decoded",
+      "title": "KING ke gaane mein chhupi film ki kahani | Tu Mil Jaaye",
+      "category": "movie_review",
+      "date": "2026-11-03 12:14",
+      "dna_sig": {
+        "palette_family": "dark-orange-amber",
+        "hero_font": "khand",
+        "background": "poster_ambilight",
+        "motif": "dust",
+        "motion": "snappy",
+        "transitions": "flash,glitch,whip,zoom_through",
+        "caption_style": "viral",
+        "opening": "word_smash",
+        "card_shape": "rounded",
+        "layout_align": "left",
+        "music_mood": "epic_trailer",
+        "tone": "dark"
+      },
+      "frame_hashes": [
+        "22075280848e0b9d",
+        "8f1313330680a060",
+        "fce094d6f3fcfc80",
+        "b878f8b07060a030",
+        "f0b0f6f690c0d8da",
+        "21e0a1b133432b68",
+        "8f1b79971f4fc7fc",
+        "8ca2b0aca4e1f0f8",
+        "cde4d4727878fcba",
+        "8d6903030280b060",
+        "b1b2f2e080607099",
+        "2247860c8dcb0b8d",
+        "918881a3a260a48c",
+        "cd263a32b058fcba",
+        "f8e830f07060a030",
+        "f0d8d8a8b8c8adac",
+        "8fc7060606c4b060",
+        "d0d0d4e4e0c06868",
+        "818080b660c084cc",
+        "0c14968841e1f0f0",
+        "98f8d0d070e0b030",
+        "c3c6c84c6c9e3f3e",
+        "60e4e6c78ff41019",
+        "8c68329661e1f0f0",
+        "8dc707070606b060",
+        "b87892f07068a030",
+        "30c6861090f1098d"
+      ],
+      "qa_passed": true,
+      "plan": [
+        [
+          "hook_slam",
+          "word_smash"
+        ],
+        [
+          "poster_hero",
+          "tilt_card"
+        ],
+        [
+          "kinetic_line",
+          "stack"
+        ],
+        [
+          "stat_counter",
+          "bar"
+        ],
+        [
+          "cast_spotlight",
+          "portraits"
+        ],
+        [
+          "fact_bomb",
+          "big"
+        ],
+        [
+          "quote_kinetic",
+          "a"
+        ],
+        [
+          "story_panels",
+          "stack"
+        ],
+        [
+          "kinetic_line",
+          "stack"
+        ],
+        [
+          "split_compare",
+          "diagonal"
+        ],
+        [
+          "quote_kinetic",
+          "a"
+        ],
+        [
+          "kinetic_line",
+          "stack"
+        ],
+        [
+          "quote_kinetic",
+          "a"
+        ],
+        [
+          "list_reveal",
+          "numbers"
+        ],
+        [
+          "split_compare",
+          "diagonal"
+        ],
+        [
+          "cast_spotlight",
+          "portraits"
+        ],
+        [
+          "stat_counter",
+          "bar"
+        ],
+        [
+          "cast_spotlight",
+          "portraits"
+        ],
+        [
+          "list_reveal",
+          "numbers"
+        ],
+        [
+          "kinetic_line",
+          "stack"
+        ],
+        [
+          "timeline",
+          "vertical"
+        ],
+        [
+          "fact_bomb",
+          "big"
+        ],
+        [
+          "split_compare",
+          "diagonal"
+        ],
+        [
+          "pros_cons",
+          "cards"
+        ],
+        [
+          "quote_kinetic",
+          "a"
+        ],
+        [
+          "verdict_stamp",
+          "stamp"
+        ],
+        [
+          "cta_loop",
+          "question"
+        ]
+      ]
+    }
+  ]
+}

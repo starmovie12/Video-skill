@@ -78,12 +78,24 @@ def upload_pack(project: dict, tl, qa: dict, out: Path, root: Path, cover: dict)
     t_tag = "#" + re.sub(r"[^A-Za-z0-9]", "", title.title())[:30]
     if len(t_tag) > 2:
         tags.insert(0, t_tag)
+    from .channel import hashtags as ch_hashtags, load as load_channel
+    ch = load_channel() if project.get("channel") else None
+    tags = ch_hashtags(project, ch, tags)
     credits = read_json(root / "media" / "credits.json", {}) or {}
     cred_lines = [f"- {k}: {v.get('author', '?')} — {v.get('license', '?')} ({v.get('source', '')})" for k, v in credits.items()]
     music = qa.get("mix", {}).get("music_source", "")
-    lines = [f"# Upload pack — {project.get('title', '')}", "",
+    ch_lines = []
+    if ch:
+        sch = ch.get("schedule", {})
+        ch_lines = ["## Channel", f"- **{ch.get('name')}** ({ch.get('handle')}) · {ch.get('platform')} · {ch.get('account_type')} account",
+                    f"- Post at **{sch.get('post_main')} IST** (second slot {sch.get('post_second')} from {sch.get('post_second_from')}) · "
+                    f"stories: {'; '.join(sch.get('stories', []))}",
+                    f"- Stay online {sch.get('reply_window_min', 60)} min after posting and reply to every comment",
+                    f"- Then: `python run.py log <project> --status posted`, and after 24 h add Insights numbers "
+                    f"(--views --skip-rate --avg-watch --sends --follows)", ""]
+    lines = [f"# Upload pack — {project.get('title', '')}", "", *ch_lines,
              "## Caption (draft — Director: rewrite in your own words, keep facts exact)", "",
-             f"{hook}", "", f"{question} 👇", "", " ".join(tags[:9]), "",
+             f"{hook}", "", f"{question} 👇", "", " ".join(tags), "",
              "## Cover", f"- Reel cover: `{Path(cover['cover']).name}` (frame at {cover['frame_time']}s) · profile grid crop: `{Path(cover['grid']).name}`",
              "", "## Files",
              f"- With music: `{Path(qa['video']).name}`",

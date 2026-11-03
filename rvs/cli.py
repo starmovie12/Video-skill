@@ -27,8 +27,9 @@ def _paths(project_dir: str):
 
 
 def load_project(pj: Path) -> dict:
+    from .channel import apply_defaults
     from .lint import lint
-    p = json.loads(pj.read_text(encoding="utf-8"))
+    p = apply_defaults(json.loads(pj.read_text(encoding="utf-8")))  # the channel's defaults; project.json values win
     errs, warns = lint(p, pj.parent)
     for w in warns:
         log(f"lint WARN: {w}")
@@ -289,11 +290,38 @@ def cmd_doctor(a):
 
 
 def cmd_new(a):
+    from .channel import apply_defaults, load
     src = Path(__file__).resolve().parent.parent / "templates" / f"{a.category}.json"
     dst = Path(a.dir)
     dst.mkdir(parents=True, exist_ok=True)
-    shutil.copy(src, dst / "project.json")
-    print(f"created {dst / 'project.json'} — fill facts, script beats and assets")
+    p = json.loads(src.read_text(encoding="utf-8"))
+    ch = load()
+    if ch:
+        p.pop("target_sec", None)  # template lengths are generic; the channel decides
+        p = apply_defaults(p, ch)
+    write_json(dst / "project.json", p)
+    print(f"created {dst / 'project.json'} — fill facts, script beats and assets"
+          + (f" · channel defaults: {ch['name']} ({ch['handle']}), {p.get('target_sec')} s reel" if ch else ""))
+
+
+def cmd_channel(a):
+    from .channel import brief
+    print(json.dumps(brief(), indent=1, ensure_ascii=False))
+
+
+def cmd_log(a):
+    from .channel import log as ch_log
+    root = Path(a.project).resolve()
+    p = json.loads((root / "project.json").read_text(encoding="utf-8")) if (root / "project.json").exists() else {}
+    q = read_json(root / "work" / "qa_report.json", {}) or {}
+    first = (p.get("beats") or [{}])[0]
+    entry = {"date": a.date or time.strftime("%Y-%m-%d"), "project": root.name, "topic": a.topic or p.get("title"),
+             "pillar": a.pillar or p.get("pillar"), "hook": first.get("show") or first.get("say"),
+             "length_s": q.get("duration"), "status": a.status, "views": a.views, "skip_rate": a.skip_rate,
+             "avg_watch_s": a.avg_watch, "sends": a.sends, "follows": a.follows, "notes": a.note}
+    row = ch_log(entry)
+    print(json.dumps(row, indent=1, ensure_ascii=False))
+    print("now commit + push channel/ so the next chat remembers this video")
 
 
 def main(argv=None):
@@ -325,6 +353,21 @@ def main(argv=None):
     s.add_argument("query", nargs="?", default="")
     s.add_argument("--n", type=int, default=8)
     s.set_defaults(fn=cmd_media)
+    s = sub.add_parser("channel", help="channel brief: who we make videos for, today's pillar, schedule, rules, recent topics")
+    s.set_defaults(fn=cmd_channel)
+    s = sub.add_parser("log", help="record a video in channel/history.jsonl (made → posted → Insights numbers)")
+    s.add_argument("project")
+    s.add_argument("--status", default="made", choices=("scripted", "made", "posted", "skipped"))
+    s.add_argument("--topic")
+    s.add_argument("--pillar")
+    s.add_argument("--date")
+    s.add_argument("--views", type=int)
+    s.add_argument("--skip-rate", dest="skip_rate", type=float)
+    s.add_argument("--avg-watch", dest="avg_watch", type=float)
+    s.add_argument("--sends", type=int)
+    s.add_argument("--follows", type=int)
+    s.add_argument("--note")
+    s.set_defaults(fn=cmd_log)
     s = sub.add_parser("refs")
     s.add_argument("folder")
     s.set_defaults(fn=cmd_refs)

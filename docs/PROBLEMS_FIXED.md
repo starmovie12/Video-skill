@@ -145,3 +145,15 @@ Status values:
 | P-71 | QA reported only the longest static run, so each fix needed another full render to find the next one | `no_static_runs` also lists `all` runs > 2.5 s as [start, length] |
 
 Tests: 18 → 21 (`test_still_crop_letterbox_and_band_position`, `test_dna_overrides_invalidate_cached_dna`, `test_qa_lists_every_static_run`).
+
+## v2.2 — channel mode (Scene Samjho)
+
+| # | Operator asked | Fix |
+|---|---|---|
+| C-01 | "Skill ko yaad rahe ki channel kaunsa hai, har nayi chat mein" | `CLAUDE.md` (auto-loaded every session) + `channel/channel.json` (name, handle, niche, pillars, rhythm, schedule, reel rules) + `run.py channel` brief |
+| C-02 | "Har video channel ke hisaab se bane" | `apply_defaults` on every project load and on `new` (50 s reel, viral captions, quiet motif, voice, handle on the end card); project values win |
+| C-03 | "Video viral jaaye" rules | Lint: length/word count (hard), hook ≤ 16 words, send line, two-option question. QA `channel_reel_length` ≤ 90 s (hard). Upload pack: posting time, ≤ 5 hashtags with `#SceneSamjho` first |
+| C-04 | "Pichhli videos yaad rahein" | `channel/history.jsonl` + `run.py log` (made → posted → Insights numbers); variety ledger moved to committed `channel/state/` so a new cloud session keeps it |
+| C-05 | "Pehle script dikhao, phir banao" | Workflow in CLAUDE.md, SKILL.md §0 and CHANNEL.md: script MD with sources → wait for "continue" → render |
+
+Tests: 21 → 23 (`test_channel_defaults_lint_hashtags`, `test_channel_log_and_brief`).

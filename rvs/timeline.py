@@ -15,7 +15,7 @@ ROLE_ALIASES = S.ROLE_DEFAULTS
 
 
 def load_assets(project: dict, root: Path) -> dict:
-    a = {"root": root}
+    a = {"root": root, "handle": (project.get("channel") or {}).get("handle")}
     asd = project.get("assets", {}) or {}
     if asd.get("poster"):
         pth = (root / asd["poster"]) if not Path(asd["poster"]).is_absolute() else Path(asd["poster"])

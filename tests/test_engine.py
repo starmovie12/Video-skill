@@ -272,3 +272,52 @@ def test_qa_lists_every_static_run():
     assert static_runs(d, 10) == [(1.0, 3.0), (4.5, 4.6)]
     assert longest_static(d, 10)[0] == 4.6
     assert static_runs(np.ones(50), 10) == []
+
+
+def _channel_dir(tmp_path, monkeypatch):
+    ch = {"name": "Test Channel", "handle": "@test.ch", "platform": "instagram", "account_type": "creator",
+          "weekly_rhythm": {"mon": "numbers", "tue": "decode", "wed": "facts", "thu": "decode", "fri": "this_week", "sat": "theory", "sun": "facts"},
+          "schedule": {"post_main": "19:30", "post_second": "13:00", "post_second_from": "2099-01-01", "stories": []},
+          "reel_rules": {"target_sec": 50, "max_sec": 60, "hard_max_sec": 90, "hook_max_words": 16, "script_words": [110, 160],
+                         "send_cta_words": ["bhejo"], "hashtags_max": 5, "base_hashtags": ["#TestCh"]},
+          "defaults": {"category": "movie_review", "format": "reel", "target_sec": 50, "caption_script": "roman",
+                       "voice": {"preset": "hindi_male"}, "dna": {"caption_style": "viral", "motif": "dust"}}}
+    d = tmp_path / "channel"
+    d.mkdir()
+    (d / "channel.json").write_text(json.dumps(ch), encoding="utf-8")
+    monkeypatch.setenv("RVS_CHANNEL", str(d))
+    return d
+
+
+def test_channel_defaults_lint_hashtags(tmp_path, monkeypatch):
+    """Channel defaults fill a project (project values win); lint enforces the reel rules; hashtags follow the policy."""
+    _channel_dir(tmp_path, monkeypatch)
+    from rvs import channel as C
+    p = C.apply_defaults({"title": "x", "target_sec": 45, "dna": {"motif": "slashes"}, "beats": []})
+    assert p["target_sec"] == 45 and p["dna"] == {"caption_style": "viral", "motif": "slashes"}
+    assert p["format"] == "reel" and p["channel"]["handle"] == "@test.ch"
+    long_reel = {"target_sec": 200, "beats": [{"say": " ".join(["शब्द"] * 30), "show": "x"}, {"say": "a", "show": "Comment karo"}]}
+    errs, warns = C.lint(long_reel)
+    assert any("CHANNEL_LENGTH" in e for e in errs)
+    assert any("CHANNEL_HOOK" in w for w in warns) and any("CHANNEL_SEND_CTA" in w for w in warns)
+    assert any("CHANNEL_QUESTION" in w for w in warns)
+    ok = {"target_sec": 50, "beats": [{"say": "छोटा हुक", "show": "Chhota hook"},
+                                       {"say": "भेजो", "show": "Ye us dost ko bhejo. Hit ya flop?"}]}
+    assert C.lint(ok) == ([], [])
+    assert C.lint(dict(long_reel, format="long"))[0] == []
+    tags = C.hashtags({"hashtags": ["#Ramayana"]}, C.load(), ["#King", "#moviereview", "#a", "#b", "#c", "#d"])
+    assert tags[0] == "#TestCh" and "#Ramayana" in tags and len(tags) == 5
+
+
+def test_channel_log_and_brief(tmp_path, monkeypatch):
+    """`log` appends a video and later updates the same project's row; the brief shows the pillar and recent topics."""
+    import datetime as dt
+    _channel_dir(tmp_path, monkeypatch)
+    from rvs import channel as C
+    C.log({"project": "p1", "topic": "Ramayana facts", "status": "made"})
+    C.log({"project": "p1", "status": "posted", "views": 1234, "notes": None})
+    rows = C.history()
+    assert len(rows) == 1 and rows[0]["status"] == "posted" and rows[0]["views"] == 1234 and rows[0]["topic"] == "Ramayana facts"
+    b = C.brief(dt.date(2026, 11, 4))
+    assert "wed" in b["today"] and "facts" in b["today"] and "decode" in b["tomorrow"]
+    assert b["post_at_ist"] == ["19:30"] and "Ramayana facts" in b["recent_topics_do_not_repeat"][0]

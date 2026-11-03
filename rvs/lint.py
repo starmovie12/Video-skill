@@ -14,6 +14,10 @@ WPS = 2.55  # MEASURED: hi-IN-MadhurNeural at +18 % ≈ 2.55 spoken tokens / s i
 
 def lint(p: dict, root=None):
     errs, warns = [], []
+    from .channel import apply_defaults, lint as channel_lint
+    ce, cw = channel_lint(apply_defaults(p))
+    errs += ce
+    warns += cw
     beats = p.get("beats") or []
     if not beats:
         return ["no beats"], warns

@@ -98,6 +98,12 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
     if tgt:
         tol = max(3.0, 0.10 * tgt)
         chk("duration_vs_target", abs(dur - tgt) <= tol, round(dur, 2), f"|{dur:.1f}s − {tgt}s| ≤ {tol:.1f}s (fix the SCRIPT, not the speed)")
+    if project.get("channel") and project.get("format", "reel") == "reel":
+        from .channel import load as load_channel
+        hard_max = ((load_channel() or {}).get("reel_rules") or {}).get("hard_max_sec", 90)
+        chk("channel_reel_length", dur <= hard_max, round(dur, 2),
+            f"{project['channel'].get('handle')} reels ≤ {hard_max}s (longer reels are not pushed to non-followers); "
+            f"\"format\": \"long\" for a deliberate long video")
     # structure
     plan = tl.plan
     designs = {(p["archetype"], p["variant"]) for p in plan}

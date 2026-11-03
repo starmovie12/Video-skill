@@ -15,11 +15,36 @@ It renders a 45–60-second Reel in about 1–2 minutes on 4 CPU cores.
 
 Your job is what the engine cannot do: research, script, **choosing the visuals by looking at them**, the visual screenplay, and an honest look at the frames.
 
+## 0. Channel mode: this skill works for ONE channel
+
+The skill is set up for **Scene Samjho**, Instagram **@scene.samjho1**: Bollywood + OTT "DECODE" reels in Hindi. Who the channel is, its niche, pillars, weekly rhythm, posting times and reel rules are in `channel/channel.json`. The reasoning is in `channel/CHANNEL.md`.
+
+- **Start every task with `python run.py channel`.** It shows:
+  - today's and tomorrow's pillar
+  - the posting time (19:30 IST)
+  - the reel rules
+  - recent topics (do not repeat one)
+- **Applied automatically:** `new` and every stage apply the channel defaults (50 s reel, viral captions, quiet motif, hindi_male voice, the channel handle on the end card). Anything set in `project.json` wins.
+- **Lint and QA enforce the reel rules:**
+  - Hard limits: length ≤ 90 s and ≤ ~200 spoken words.
+  - Warnings: hook ≤ 16 words, a send line, and a two-option question at the end.
+  - For a deliberate long video, set `"format": "long"`.
+- **Upload pack:** the channel block, the posting time, and ≤ 5 hashtags with `#SceneSamjho` first.
+- **Workflow with the operator:**
+  1. Research the topic.
+  2. Write the **script MD**, with a source per fact, and show it.
+  3. **Wait for "continue"** before rendering.
+  4. proof → make → deliver.
+  5. Log it: `python run.py log <project> --status made`, later `--status posted` with the Insights numbers.
+  6. Commit + push `channel/`.
+- **Persistence:** `channel/state/` holds the variety ledger in the repo (used unless `RVS_HOME` is set), so a new chat still knows the past looks.
+- **Generic mode:** to use the engine for something else, move `channel/channel.json` away or point `RVS_CHANNEL` to another folder.
+
 ## Non-negotiable rules
 
 1. **Hook first.** Beat 1 has `role: "hook"`. Never open with a greeting ("namaste doston", "hello guys", "aaj hum"). Open with the most surprising true claim, number, contradiction or question.
 2. **Real visuals over typography.** A Reel with footage or stills behind the graphics beats text on a background every time. Always gather media (step 2) before writing the visual plan. Use graphic-only mode only when there truly is no usable image.
-3. **Every video looks different.** Never copy `dna` from an earlier project. The Variety Ledger (`~/.rvs/ledger.json`) forces each new Style DNA to differ from the last videos, and QA fails if frames look too similar to the past.
+3. **Every video looks different.** Never copy `dna` from an earlier project. The Variety Ledger (`channel/state/ledger.json`, else `~/.rvs/ledger.json`) forces each new Style DNA to differ from the last videos, and QA fails if frames look too similar to the past.
 4. **Zero invented facts.** Every factual claim (year, cast, box office, price, spec) comes from a source you actually checked. List the sources in `facts.sources`. Opinions are labelled as opinions ("meri raay"). If you cannot verify something, cut it.
 5. **Look before you claim.**
    - Open (Read) `media_sheet.jpg` before assigning media.

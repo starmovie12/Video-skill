@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from .core import Rng, clamp, ensure_contrast, extract_palette, from_oklch, hue_name, log, read_json, rvs_home, stable_seed, write_json
+from .core import Rng, clamp, ensure_contrast, extract_palette, from_oklch, hue_name, log, read_json, rvs_home, stable_seed, state_home, write_json
 from .typo import REG
 
 CATEGORIES = ("movie_review", "product", "facts", "story", "software", "game", "generic")
@@ -229,7 +229,7 @@ def pick_fonts(vibes: list[str], rng: Rng, need_deva_hero: bool, caption_script:
 
 # ───────────────────────── ledger + taste ─────────────────────────
 def ledger_path() -> Path:
-    return rvs_home() / "ledger.json"
+    return state_home() / "ledger.json"
 
 
 def load_ledger() -> list[dict]:
@@ -243,7 +243,7 @@ def save_ledger_entry(entry: dict) -> None:
 
 
 def load_taste() -> dict:
-    return read_json(rvs_home() / "taste.json", {"weights": {}, "refs": [], "notes": []})
+    return read_json(state_home() / "taste.json", {"weights": {}, "refs": [], "notes": []})
 
 
 def dna_signature(dna: dict) -> dict:
@@ -360,7 +360,7 @@ def feedback(dna: dict, approve: bool, note: str = "") -> dict:
         d[v] = round(clamp(d.get(v, 0.0) + (0.35 if approve else -0.45), -0.9, 3.0), 3)
     if note:
         t.setdefault("notes", []).append({"date": datetime.date.today().isoformat(), "approve": approve, "note": note})
-    write_json(rvs_home() / "taste.json", t)
+    write_json(state_home() / "taste.json", t)
     return t
 
 
@@ -425,7 +425,7 @@ def intake_references(folder: Path) -> dict:
             w.setdefault("motion", {})
             w["motion"]["snappy"] = round(clamp((2.5 - pace), -0.9, 2), 3)
             w["motion"]["smooth"] = round(clamp((pace - 2.5) * 0.6, -0.9, 2), 3)
-    write_json(rvs_home() / "taste.json", t)
+    write_json(state_home() / "taste.json", t)
     return t
 
 

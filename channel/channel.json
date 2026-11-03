@@ -1,0 +1,81 @@
+{
+  "_about": "The ONE channel this skill makes videos for. Every new project, lint, QA and upload pack reads this file. Edit it when the channel changes.",
+  "platform": "instagram",
+  "handle": "@scene.samjho1",
+  "name": "Scene Samjho",
+  "account_type": "creator",
+  "category_label": "Reel creator",
+  "bio": "🎬 Trailer, gaane, box office: DECODE in Hindi | 🔍 Har scene ka asli matlab | 🕖 Roz shaam 7:30 baje naya reel",
+  "started": "2026-11-03",
+  "language": "Hindi voice-over (Devanagari for TTS), Roman Hinglish on-screen captions",
+  "niche": "Bollywood + OTT DECODE in Hindi: trailers, songs, box office, OTT releases, film facts — har scene ka asli matlab",
+  "audience": "Hindi-speaking movie fans in India, 16–35, mostly on phones, sound often off",
+  "pillars": {
+    "decode": "Trailer / song / teaser decoded scene by scene: clues about the film's story",
+    "numbers": "Box office, budget, advance booking, records: one big number per reel",
+    "facts": "N things nobody knows about a film / star / release",
+    "this_week": "What to watch this week: theatre + OTT, with a one-line verdict each",
+    "theory": "Fan theories or a debate with a two-option question"
+  },
+  "weekly_rhythm": {
+    "mon": "numbers",
+    "tue": "decode",
+    "wed": "facts",
+    "thu": "decode",
+    "fri": "this_week",
+    "sat": "theory",
+    "sun": "facts"
+  },
+  "trend_override": "If a big trailer / teaser / song / release / box-office headline broke in the last 24 h, skip the day's pillar and decode that instead, posted the same day.",
+  "schedule": {
+    "timezone": "Asia/Kolkata",
+    "research": "09:00",
+    "script_to_operator": "10:00",
+    "make_after_approval": "11:00",
+    "post_main": "19:30",
+    "post_second": "13:00",
+    "post_second_from": "2026-11-17",
+    "stories": ["09:00 poll about the day's topic", "21:00 share the day's reel"],
+    "reply_window_min": 60
+  },
+  "reel_rules": {
+    "target_sec": 50,
+    "min_sec": 30,
+    "max_sec": 60,
+    "hard_max_sec": 90,
+    "hook_max_words": 16,
+    "script_words": [110, 160],
+    "send_cta_words": ["bhejo", "send", "share", "tag"],
+    "hashtags_max": 5,
+    "base_hashtags": ["#SceneSamjho"],
+    "cover_required": true,
+    "one_topic_per_reel": true,
+    "facts_need_sources": true
+  },
+  "defaults": {
+    "category": "movie_review",
+    "format": "reel",
+    "target_sec": 50,
+    "caption_script": "roman",
+    "cover_tag": "SCENE SAMJHO",
+    "voice": {"engine": "auto", "preset": "hindi_male"},
+    "dna": {"caption_style": "viral", "motif": "dust"}
+  },
+  "workflow": [
+    "1. `python run.py channel` — brief: today's pillar, schedule, recent topics (never repeat one).",
+    "2. Research today's topic on the web (last 24–48 h, Bollywood + OTT). Facts only with sources.",
+    "3. Write the script MD and SHOW IT to the operator. Wait for 'continue' before rendering.",
+    "4. `run.py new movie_review <dir>` (channel defaults applied) → beats → lint → proof → look → make.",
+    "5. QA PASS + review.md → deliver. Send: mp4, _no_music.mp4, cover, upload pack.",
+    "6. `run.py log <project> --status made`; after posting/24 h: `--status posted` + Insights numbers.",
+    "7. Commit + push channel/ (history + state) so the next chat remembers."
+  ],
+  "never": [
+    "Raw movie clips or someone else's reel re-posted as is (Instagram originality policy)",
+    "Reels longer than 90 s for discovery (3 min+ reels are not pushed to non-followers)",
+    "Facts without a source; fan theories without the word 'theory'",
+    "A greeting as the first line; a reel without a cover; more than 5 hashtags",
+    "Committing copyrighted stills or the final videos to this repo"
+  ],
+  "growth_plan": "channel/GROWTH_PLAN.md"
+}

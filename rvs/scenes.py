@@ -1069,7 +1069,11 @@ def cta_loop(ctx: Ctx, sc):
     sc.add(ctx.layer(c, W / 2, qy + q.h / 2 - q.meta["pad"] + 80, z=1.0, t_in=tc, enter="pop", idle="pulse", role="label"))
     sc.cue(tc, "ding", 0.6)
     cm = ctx.chip(ctx.data.get("comment_cta", "COMMENT KARO"), fill=mix_hex(p["bg1"], p["text"], 0.12), color=p["text"], px=40)
-    sc.add(ctx.layer(cm, W / 2, qy + q.h / 2 - q.meta["pad"] + 80 + c.h + 20, z=1.0, t_in=tc + 0.25, enter="rise", role="label"))
+    y_cm = qy + q.h / 2 - q.meta["pad"] + 80 + c.h + 20
+    sc.add(ctx.layer(cm, W / 2, y_cm, z=1.0, t_in=tc + 0.25, enter="rise", role="label"))
+    if ctx.assets.get("handle"):  # the channel's handle on the end card: a shared reel still says whose it is
+        hd = ctx.body(ctx.assets["handle"], (800, 70), px=44, color=p["text"], role="label", max_lines=1)
+        sc.add(ctx.layer(hd, W / 2, min(y_cm + cm.h / 2 + 50, ctx.bottom - 30), z=1.0, t_in=tc + 0.4, enter="rise", role="label"))
     add_motif(ctx, sc)
 
 

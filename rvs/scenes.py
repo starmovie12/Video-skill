@@ -135,8 +135,10 @@ class Ctx:
 # ───────────────────────── backgrounds ─────────────────────────
 def make_bg(ctx: Ctx, kind=None, variant_seed=0) -> Background:
     if ctx.footage:  # footage-first: real visuals under the graphics whenever the beat has media
-        from .media import build_background
-        return build_background(ctx.footage, ctx.assets["root"], ctx.dna, dark=True)
+        from .media import CLEAN_LOOKS, build_background
+        light = ctx.beat["archetype"] in ("footage_clean", "host_cam") or (
+            ctx.dna.get("look") in CLEAN_LOOKS and ctx.beat["archetype"] in ("hook_slam", "cta_loop"))
+        return build_background(ctx.footage, ctx.assets["root"], ctx.dna, dark=True, heavy_text=not light)
     if kind is None:
         kind = ctx.dna["background"] if ctx.idx % 3 != 1 else ctx.dna.get("background2", ctx.dna["background"])
     if not ctx.dark and kind in ("grid_tech", "bokeh_night", "spotlight"):
@@ -1412,6 +1414,104 @@ def choose_archetype(role: str, category: str, used: list[str], rng: Rng, has_po
     if not cands:
         cands = [c for c in ("kinetic_line", "quote_kinetic", "fact_bomb") if not used or c != used[-1]]
     return rng.choice(cands)
+
+
+# ───────────────────────── top-creator layouts (looks: clean / rush / bar / split) ─────────────────────────
+SERIES_DEFAULT = {"numbers": "BOX OFFICE DECODE", "decode": "SCENE DECODE", "facts": "FILMY FACTS", "this_week": "IS HAFTE KYA DEKHEIN",
+                  "theory": "FAN THEORY"}
+
+
+def series_label(ctx: Ctx) -> str:
+    return str(ctx.assets.get("series") or "SCENE SAMJHO").upper()
+
+
+def beat_tag(ctx: Ctx) -> str:
+    """The ONE short line a clean scene shows (top creators show only the number / name, never the whole sentence)."""
+    d = ctx.data
+    if d.get("tag"):
+        return str(d["tag"])
+    if d.get("big"):
+        return str(d["big"])
+    if d.get("value") is not None:
+        v = d["value"]
+        dec = int(d.get("decimals", 0))
+        num = f"{float(v):,.{dec}f}" if dec else f"{int(round(float(v))):,}"
+        return f"{d.get('prefix', '')}{num}{d.get('suffix', '')}".strip()
+    if d.get("left") and d.get("right"):
+        return f"{d['left'].get('title', '')} vs {d['right'].get('title', '')}"
+    if d.get("title"):
+        return str(d["title"])
+    return ""
+
+
+def _tag_layer(ctx: Ctx, sc, text, y, style):
+    p = ctx.pal
+    if not text:
+        return
+    t_in = ctx.t_word(text, 0.08)
+    if style == "news":  # white bold italic over the footage, hard shadow (v1 style: "₹1300 Crores!!!")
+        spr = ctx.hero(text, (960, 260), max_lines=2, max_px=170, min_px=72, color="#FFFFFF", case="title", stroke=0.07, role="hero")
+        sc.add(ctx.layer(spr, W / 2, y, z=1.0, t_in=t_in, enter="pop", idle="breathe", role="hero"))
+    else:  # "label": small caps label on a dark strip at the top (v2 style: "1.71 BILLION HOURS")
+        spr = ctx.chip(text, fill="#0B0B0F", color=p["accent"], px=64, case="upper")
+        sc.add(ctx.layer(spr, W / 2, y, z=1.0, t_in=t_in, enter="drop", role="label"))
+    sc.cue(t_in, "pop", 0.5)
+
+
+@archetype("footage_clean", roles=("fact", "story", "line", "context", "stat", "compare", "opinion", "list", "cast"),
+           variants=("news", "label"))
+def footage_clean(ctx: Ctx, sc):
+    """Full-bleed, bright footage; only the number / name on screen (plus captions). The look of top creators' shorts."""
+    sc.bg = make_bg(ctx)
+    camera_for(ctx, sc, "push")
+    v = ctx.variant if ctx.variant in ("news", "label") else "news"
+    y = 560 if v == "news" else SAFE["top"] + 40
+    _tag_layer(ctx, sc, beat_tag(ctx), y, v)
+
+
+def _host_source(ctx: Ctx, size):
+    h = ctx.assets.get("host")
+    if not h:
+        return None
+    from .media import ClipSource
+    t0 = float(ctx.beat.get("_t0", 0.0)) + float(h.get("offset", 0.0))
+    return ClipSource(h["path"], t0, t0 + ctx.dur + 1.0, ctx.dur + 1.0, size=size)
+
+
+@archetype("split_top", roles=("fact", "story", "line", "context", "stat", "compare", "opinion", "cast"), variants=("bar", "plain"))
+def split_top(ctx: Ctx, sc):
+    """Footage band on top (~44 %), the operator's face-cam below (assets.host) — or, without a host, a solid panel with the
+    beat's words as kinetic type. A label strip sits on the seam ("1 MIN REVIEW" style)."""
+    from .media import SplitBackground, make_source
+    p = ctx.pal
+    band_h = 840 if ctx.assets.get("host") else 1060  # without a face-cam the word panel needs less room
+    panel = gfx.linear_gradient(W, H, [p["bg0"], mix_hex(p["bg0"], p["accent"], 0.18), p["bg0"]], 90, ctx.idx).convert("RGBA")
+    band = [(t, make_source(ctx.assets["root"], seg, size=(W, band_h))) for t, seg in (ctx.footage or [])]
+    host = _host_source(ctx, (W, H - band_h))
+    sc.bg = SplitBackground(band, band_h, panel, host=host)
+    camera_for(ctx, sc, "pull")
+    if ctx.variant != "plain":
+        lab = ctx.chip(series_label(ctx), fill=p["accent"], color=p["ink"], px=54, case="upper")
+        sc.add(ctx.layer(lab, W / 2, band_h, z=1.1, t_in=0.0, enter="none", role="label"))
+    tag = beat_tag(ctx)
+    if tag:
+        spr = ctx.hero(tag, (940, 150), max_lines=1, max_px=104, min_px=56, color="#FFFFFF", stroke=0.06, role="hero")
+        sc.add(ctx.layer(spr, W / 2, band_h - 120, z=1.0, t_in=ctx.t_word(tag, 0.1), enter="pop", role="hero"))
+    if host is None:  # words on the lower panel (captions are off for this scene)
+        kinetic_stack(ctx, sc, words_or_text(ctx), (SAFE["left"] + 20, band_h + 80, SAFE["right_low"], SAFE["bottom"] - 30),
+                      max_words_page=4)
+
+
+@archetype("host_cam", roles=("hook", "opinion", "verdict", "line", "cta"), variants=("a",))
+def host_cam(ctx: Ctx, sc):
+    """The operator on camera, full frame (needs assets.host). Falls back to footage_clean when there is no host video."""
+    host = _host_source(ctx, (W, H))
+    if host is None:
+        return footage_clean(ctx, sc)
+    from .media import SplitBackground
+    sc.bg = SplitBackground([], 0, Image.new("RGBA", (W, H), (0, 0, 0, 255)), host=host)
+    camera_for(ctx, sc, "push")
+    _tag_layer(ctx, sc, beat_tag(ctx), SAFE["top"] + 120, "news")
 
 
 ROLE_DEFAULTS = {"hook": "hook_slam", "intro": "poster_hero", "title": "poster_hero", "rating": "rating_meter", "story": "story_panels",

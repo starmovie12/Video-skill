@@ -27,7 +27,34 @@ def load_assets(project: dict, root: Path) -> dict:
         a["focus"] = [tuple(b) for b in asd["focus"]]
     if asd.get("product"):
         a["product"] = Image.open(root / asd["product"]).convert("RGBA")
+    if asd.get("host"):  # the operator's own face-cam recording (vertical video); its audio is the voice-over
+        hp = (root / asd["host"]) if not Path(asd["host"]).is_absolute() else Path(asd["host"])
+        if not hp.exists():
+            raise RvsError("ASSET_MISSING", f"host video not found: {hp}")
+        a["host"] = {"path": hp, "offset": float(asd.get("host_offset", 0.0))}
+    a["series"] = project.get("series") or S.SERIES_DEFAULT.get(project.get("pillar", ""), "SCENE SAMJHO")
     return a
+
+
+GRAPHIC = ("stat_counter", "list_reveal", "split_compare", "timeline", "rating_meter", "verdict_stamp")
+
+
+def apply_look(look: str, arch: str, i: int, n: int, has_media: bool, host: bool, kept: list) -> str:
+    """Map a beat's archetype onto the video's LOOK (the edit format). poster = designed kinetic-type cards (the old default);
+    clean / rush / bar = full-bleed bright footage with only the number or name on screen, at most ONE graphic card;
+    split = footage band on top + the operator's face-cam (or a word panel) below."""
+    if look in (None, "", "poster") or arch in ("hook_slam", "cta_loop"):
+        return arch
+    if look == "split":
+        return "split_top" if has_media else ("host_cam" if host else arch)
+    if host and i % 3 == 1:  # back to the host between cutaways (top creators' rhythm)
+        return "host_cam"
+    if not has_media:
+        return arch
+    if arch in GRAPHIC and not kept:
+        kept.append(arch)
+        return arch
+    return "footage_clean"
 
 
 def _build(ctx, scn):
@@ -55,6 +82,9 @@ class Timeline:
         variants.setdefault("hook_slam", dna["opening"])
         self.scenes = []
         self.plan = []
+        kept_graphic = []
+        if dna.get("look") == "bar":
+            variants["footage_clean"] = "news"  # the label variant would sit under the series bar
         # scene boundaries = voice beat starts, snapped onto the music beat grid (±0.2 s) → cuts land on the beat
         bpm, off = assets.get("beat_grid") or (dna.get("bpm") or 0, 0.0)
         bounds = [0.0] + [sp["t0"] for sp in spans[1:]]
@@ -86,9 +116,16 @@ class Timeline:
                 arch = "kinetic_line"
             if arch not in variants:
                 variants[arch] = rng.choice(list(S.ARCH[arch]["variants"]))
+            if not b.get("keep_archetype"):
+                arch = apply_look(dna.get("look"), arch, i, len(beats), i in (assets.get("media_segments") or {}), bool(assets.get("host")),
+                                  kept_graphic)
+                if arch not in variants:
+                    variants[arch] = rng.choice(list(S.ARCH[arch]["variants"]))
             used.append(arch)
             t0, t1 = bounds[i], bounds[i + 1]
-            beat = dict(b, archetype=arch)
+            beat = dict(b, archetype=arch, _t0=t0)
+            if arch == "split_top" and not assets.get("host"):
+                beat["captions"] = False  # the lower panel already shows the words
             if i == 0 and arch != "hook_slam" and b.get("role") == "hook":
                 beat["archetype"] = "hook_slam"
             words = [dict(w, t0=round(w["t0"] - t0, 3), t1=round(w["t1"] - t0, 3)) for w in voice["words"] if w["beat"] == i]
@@ -120,6 +157,17 @@ class Timeline:
         cwords = [dict(w, caption=w["beat"] in cap_beats) for w in voice["words"]]
         self.captions = Captioner(cwords, dna)
         self.progress = dna.get("progress_bar", (dna["seed"] % 3) == 0)
+        self.series_bar = self._series_bar() if dna.get("look") == "bar" else None
+
+    def _series_bar(self):
+        """Persistent series header (top creators keep one: "NETFLIX · MOST WATCHED SERIES", "1 MIN REVIEW")."""
+        from .typo import text_sprite
+        p, F = self.dna["palette"], self.dna["fonts"]
+        title = text_sprite(str(self.assets.get("series", "SCENE SAMJHO")).upper(), F["hero"], 92, color=p["accent"], box=(1000, 130),
+                            max_lines=1, max_px=96, role="label", stroke=0.05)
+        bar = Image.new("RGBA", (W, title.h + 36), (8, 8, 12, 225))
+        bar.alpha_composite(title.img, ((W - title.w) // 2, 18))
+        return bar
 
     # ── build everything in the parent (cues for the mix, text boxes for QA); workers inherit via fork ──
     def build_all(self):
@@ -169,6 +217,8 @@ class Timeline:
             fr = transition(tr["kind"], A, B, p, self.dna["palette"]["accent"], tr["seed"], tr["dir"]).convert("RGBA")
         else:
             fr = self.scenes[self.scene_at(t)].frame(t)
+        if self.series_bar is not None:
+            fr.alpha_composite(self.series_bar, (0, 232))
         self.captions.render(fr, t)
         if self.progress:
             q = min(1.0, t / self.duration)

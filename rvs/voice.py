@@ -515,7 +515,8 @@ def _recorded(project, vcfg, beats, work, lang, clips) -> str:
     f = vcfg.get("file")
     if not f:
         raise RvsError("TTS_REC", "voice.file (whole script) or beats[i].audio (per beat) required for engine 'recording'/'files'")
-    x, _ = _trim(ffmpeg_decode(root / f))
+    x, off = _trim(ffmpeg_decode(root / f))
+    vcfg["_trim_offset"] = round(off, 3)  # a host (face-cam) video is synced with this: video time = voice time − 0.12 + offset
     toks_all, owner = [], []
     for i, b in enumerate(beats):
         t = (b.get("say") or b.get("show")).split()
@@ -583,7 +584,8 @@ def _assemble(project, vcfg, beats, clips, used, timing, work) -> dict:
     voice_x = np.concatenate(out)
     write_wav(work / "voice.wav", voice_x)
     info = {"engine": used, "voice": vcfg.get("voice_id") or vcfg.get("voice"), "rate": vcfg.get("rate"), "timing": timing,
-            "pacing": vcfg.get("pacing", "reel"), "duration": round(len(voice_x) / SR, 3), "words": words, "spans": spans}
+            "pacing": vcfg.get("pacing", "reel"), "duration": round(len(voice_x) / SR, 3), "words": words, "spans": spans,
+            "lead_in": 0.12, "trim_offset": vcfg.get("_trim_offset", 0.0)}
     (work / "words.json").write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding="utf-8")
     log(f"voice: {used} · {info['duration']:.1f}s · {len(words)} words · timing {timing}")
     return info

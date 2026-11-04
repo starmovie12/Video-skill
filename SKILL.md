@@ -118,6 +118,8 @@ Create `<project>/media/`. Put everything there:
 A still can also be a dict, so a few wide stills can be used in several ways:
 - **Zoom crop (cover):** `{"file": "media/still.jpg", "crop": [x0,y0,x1,y1]}` — normalised box. It fills the 9:16 frame: a punch-in on one face or detail.
 - **Letterbox:** `{"file": "media/still.jpg", "fit": "letterbox"}` — the whole wide frame stays sharp over a blurred copy of itself. Wide stills (aspect > 1.25) do this automatically when no crop is given.
+- **Rotate:** `{"file": "media/trailer.mp4#4", "fit": "rotate"}` (clips or stills) turns a landscape frame 90° so it fills the whole 9:16 screen. Top Hindi shorts creators do this for 16:9 trailers (see `docs/REFERENCE_ANALYSIS.md`). Use it for 1–2 shots per reel as a pattern break, not for faces people must read.
+- **Clip letterbox:** `{"file": "media/trailer.mp4#4", "fit": "letterbox", "y": 0.4}` keeps the whole 16:9 shot sharp in a band over a blurred copy (clips too, not only stills).
 - **Low-resolution stills** (e.g. under ~600 px tall): use letterbox. A cover crop of them is blurry.
 - **Letterbox position:** add `"y": 0.62` to move the sharp band lower when the beat's big text sits in the upper half, so text never covers faces (default 0.46). Crop + letterbox together zooms in but keeps the image's full height.
 - **Variety:** never put the same file on two consecutive beats. Alternate crops and letterbox of the same still between non-adjacent beats.
@@ -198,8 +200,8 @@ For every beat decide what the line *means* and which media plus graphic shows i
 | line (anything else) | `kinetic_line` | stack / diagonal | – |
 
 QA requires:
-- **Distinct layouts:** ≥ 5 in a movie review (≥ 3 otherwise).
-- **No repeats:** no archetype twice in a row, and at most 2 uses per minute.
+- **Distinct layouts:** ≥ 5 in a movie review with the `poster` look (≥ 3 otherwise).
+- **No repeats:** no designed card twice in a row, and at most 2 uses per minute. Footage layouts (`footage_clean`, `split_top`, `host_cam`) are exempt: there the footage changes every 1.3–2.2 s.
 - **No empty cards:** a card role always comes with its data. Lint stops you otherwise.
 
 **Starter structures**
@@ -215,6 +217,29 @@ QA requires:
 
 Changing `dna` after a `proof` takes effect on the next run. The cached `work/dna.json` is regenerated whenever the overrides differ. With the same overrides it is reused, so the look stays stable between proof and make.
 - **Motif over faces:** when a still's faces are the point (actor stills, posters), prefer a quiet motif such as `dust`, `light_rays` or `film_perfs`. Line motifs like `slashes` cross the faces.
+
+### 5b. Look (edit format): never the same as the last video
+The **look** is the biggest visual lever, bigger than fonts or colours. The Style DNA picks one per video and **never repeats the previous video's look** (QA `look_differs_from_last`). Pin one only with a reason: `"dna": {"look": "split"}`.
+
+| look | what the viewer sees | built from | best for |
+|---|---|---|---|
+| `poster` | designed kinetic-type cards over darkened footage (the original engine look) | the archetypes above | graphic-heavy explainers, few media |
+| `clean` | full-bleed **bright** footage, only the number or name on screen (`₹1300 Crores!!!` style) + captions; one graphic card max | `footage_clean` (variants `news` = big white italic number mid-screen, `label` = small caps strip at the top) | trailer decodes, box office with good footage |
+| `rush` | `clean` + a cut every ~1.3 s (photo-montage energy) | `footage_clean`, auto media at 1.3 s | actor / actress facts with many photos |
+| `bar` | `clean` + a persistent series header on every frame (`FILMY FACTS`, `BOX OFFICE DECODE`; `"series"` in project.json overrides) | series bar in the timeline | top-3 lists, recurring series |
+| `split` | footage band on the top ~44 %, the **operator's face-cam** below (or, without a host video, the beat's words on a panel); a label strip on the seam | `split_top`, `host_cam` | reviews and opinions, the format most top creators use |
+
+How a look maps beats (automatic, `rvs/timeline.py::apply_look`):
+- The hook (`hook_slam` with `frame1`) and the ending (`cta_loop`) keep their designed layouts in every look.
+- In `clean` / `rush` / `bar`, every middle beat with media becomes `footage_clean`, except ONE graphic card (`stat_counter`, `list_reveal`, `split_compare`, `timeline`, `rating_meter` or `verdict_stamp`), which stays as the one "pop" moment.
+- In `split`, middle beats with media become `split_top`.
+- Beats without media keep their designed card. Set `"keep_archetype": true` on a beat to opt it out.
+- `data.tag` sets the one line a clean or split scene shows. Otherwise it comes from `big`, `value`+`suffix`, `left` vs `right`, or `title`.
+
+**Host (the operator on camera), the strongest upgrade:** all 5 reference creators show their own face. Put the operator's selfie recording (vertical, reading the script) at `media/host.mp4` and set `"assets": {"host": "media/host.mp4"}`:
+- its audio becomes the voice-over (engine `recording`, Whisper alignment; no AI voice, so no AI-voice disclosure for the voice);
+- `split` shows it under the footage, and the other looks cut back to it every third beat (`host_cam`), like the references;
+- `host_offset` (seconds) shifts it if the recording starts late. The engine already corrects the silence it trims from the start.
 
 ### 6. Music
 Choose one:

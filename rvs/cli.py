@@ -30,6 +30,11 @@ def load_project(pj: Path) -> dict:
     from .channel import apply_defaults
     from .lint import lint
     p = apply_defaults(json.loads(pj.read_text(encoding="utf-8")))  # the channel's defaults; project.json values win
+    host = (p.get("assets") or {}).get("host")
+    if host and (p.get("voice") or {}).get("engine") not in ("recording", "files"):
+        p["voice"] = {"engine": "recording", "file": host, "pacing": "natural"}  # the face-cam's own audio is the voice-over
+        if p.get("disclosure") == "AI voice":
+            p["disclosure"] = ""  # a real human voice: no AI-voice label (keep one only if AI visuals are used)
     errs, warns = lint(p, pj.parent)
     for w in warns:
         log(f"lint WARN: {w}")
@@ -55,6 +60,10 @@ def stage_dna(p, root, work, reroll=False):
         if d.get("_overrides", {}) == over:  # cached DNA is only valid for the same project.json overrides
             return d
     assets = load_assets(p, root)
+    md = root / "media"
+    p["_has_media"] = md.is_dir() and any(f.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".mkv", ".webm")
+                                          for f in md.iterdir())
+    p["_has_host"] = bool(assets.get("host"))
     d = generate(p, assets.get("poster"), seed_extra=str(time.time()) if reroll else "")
     d["_overrides"] = over
     write_json(f, d)
@@ -71,9 +80,11 @@ def build_timeline(p, root, voice, dna):
         from .audio import beat_grid, ffmpeg_decode
         assets["beat_grid"] = beat_grid(ffmpeg_decode(root / mf, ch=2, start=float(p["assets"].get("music_start", 0)))[: 48000 * 90])
         log(f"music: {mf} → {assets['beat_grid'][0]} BPM (phase {assets['beat_grid'][1]}s); cuts snap to its beats")
+    if assets.get("host"):  # face-cam video ↔ voice timeline
+        assets["host"]["offset"] += float(voice.get("trim_offset", 0.0)) - float(voice.get("lead_in", 0.12))
     cat = scan(p, root, work)
     if cat["items"]:
-        assets["media_segments"] = assign(p, cat, voice)
+        assets["media_segments"] = assign(p, cat, voice, seg_target=1.3 if dna.get("look") == "rush" else 2.2)
         write_json(work / "media_plan.json", {str(k): v for k, v in assets["media_segments"].items()})
         log(f"media: {len(cat['items'])} files · footage on {len(assets['media_segments'])}/{len(p['beats'])} beats")
     return Timeline(p, voice, dna, assets).build_all()

@@ -129,22 +129,37 @@
       "The payoff of the hook lands by 2 s. No set-up sentence first.",
       "The send line comes before ~70 % of the reel, not only at the end: in the Ramayan reel only ~3 % were left at the end."
     ],
-    "share_topics": "Pick topics people send to a friend: a meme they already share (e.g. Drishyam '2 October'), a debate with two sides, a detail most people missed, nostalgia with a fresh number. Plain news recaps and topics every page already covered rarely get sends."
+    "share_topics": "Pick topics people send to a friend: a meme they already share (e.g. Drishyam '2 October'), a debate with two sides, a detail most people missed, nostalgia with a fresh number. Plain news recaps and topics every page already covered rarely get sends.",
+    "voice_style": [
+      "Talk like a person to a friend, not a narrator: 'bhai', 'aap/tum', 'kasam se', 'believe nahi hoga', 'maine dekha'. No greeting, no 'dosto'.",
+      "First words = the claim + the number or name, said within 2 s ('Terah sau crore ke Prabhas').",
+      "One fact or number per sentence; numbers early.",
+      "Compare with something the audience already knows (Baahubali, RRR, KGF, a meme).",
+      "Ride the week's trending debate into your topic ('Sab X ki baat kar rahe hain… lekin kya aapko pata hai…').",
+      "Hold a curiosity gap: name the film or the answer late, or count down 3 → 1.",
+      "End on a callback to the hook or a clear verdict ('isko miss mat karna'), then the two-option question on screen. Never 'like / share / follow karo'.",
+      "Pace: 3.3–4 words/s for fact lists; slower with pauses only to build suspense."
+    ],
+    "visual_style": [
+      "Footage is the picture: bright, full-colour, a new shot every 0.8–2 s.",
+      "On-screen text only for the number or name that matters (data.tag), or a series label. No full sentences on screen except the frame-1 hook and the final question.",
+      "Rotate or band 16:9 trailer footage instead of cropping away 70 % of it (fit 'rotate' / split look).",
+      "Never the same look as the last reel (DNA look rotation: poster / clean / rush / bar / split).",
+      "Best upgrade: the operator on camera (assets.host). All 5 reference creators show their face."
+    ]
   },
   "defaults": {
     "category": "movie_review",
     "format": "reel",
-    "target_sec": 50,
+    "target_sec": 35,
     "caption_script": "roman",
     "cover_tag": "SCENE SAMJHO",
     "voice": {
       "engine": "auto",
-      "preset": "hindi_male"
+      "preset": "hindi_male",
+      "rate": "+28%"
     },
-    "dna": {
-      "caption_style": "viral",
-      "motif": "dust"
-    },
+    "dna": {},
     "disclosure": "AI voice"
   },
   "workflow": [
@@ -170,6 +185,14 @@
       "video": "2026-11-04_ramayana",
       "numbers": "158 views, skip 62.7 %, avg watch 7 s of 49 s, 0 shares, 0 follows (at 2 h)",
       "lesson": "Hook frame and topic, not length alone: half the viewers left in the first second. Next reels: hook text on frame 1, payoff by 2 s, 25–40 s, a share-able topic, send line earlier."
+    },
+    {
+      "date": "2026-11-04",
+      "video": "2026-11-04_drishyam-2-october",
+      "numbers": "481 views, skip 52.6 %, avg watch 5 s of 39 s, 2 likes, 0 shares, 0 follows (at ~4 h)",
+      "lesson": "Frame-1 hook worked (skip 62.7 → 52.6 %, 3x views) but viewers left right after it. Reference analysis (docs/REFERENCE_ANALYSIS.md): top creators show a real person, bright footage, almost no text, a different layout from ours. Skill now rotates looks and supports the operator's face-cam."
     }
-  ]
+  ],
+  "_about_defaults": "No DNA dims pinned here on purpose: pinning caption_style/motif made every reel look the same. Voice +28 %: the 5 reference creators speak 3.3–4.2 words/s; our +18 % voice was 2.7 words/s.",
+  "_reference_analysis": "docs/REFERENCE_ANALYSIS.md (5 top Hindi film shorts, 4 Nov 2026)"
 }

@@ -109,16 +109,20 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
             f"\"format\": \"long\" for a deliberate long video")
     # structure
     plan = tl.plan
+    look = tl.dna.get("look") or "poster"
+    # footage layouts (clean / split / host) repeat on purpose: there the footage itself changes every ~1.3–2.2 s
+    FOOT = ("footage_clean", "split_top", "host_cam")
     designs = {(p["archetype"], p["variant"]) for p in plan}
-    need = 5 if project.get("category", "movie_review") == "movie_review" and dur >= 30 else 3
-    chk("distinct_frame_designs", len(designs) >= need, len(designs), f"≥ {need} distinct archetype layouts")
-    consec = [plan[i]["archetype"] for i in range(1, len(plan)) if plan[i]["archetype"] == plan[i - 1]["archetype"]]
-    chk("no_repeat_consecutive_layout", not consec, consec, "no archetype twice in a row")
+    need = 5 if project.get("category", "movie_review") == "movie_review" and dur >= 30 and look == "poster" else 3
+    chk("distinct_frame_designs", len(designs) >= need, len(designs), f"≥ {need} distinct archetype layouts (look: {look})")
+    consec = [plan[i]["archetype"] for i in range(1, len(plan)) if plan[i]["archetype"] == plan[i - 1]["archetype"]
+              and plan[i]["archetype"] not in FOOT]
+    chk("no_repeat_consecutive_layout", not consec, consec, "no designed card twice in a row (footage layouts exempt)")
     from collections import Counter
-    cnt = Counter(p["archetype"] for p in plan)
+    cnt = Counter(p["archetype"] for p in plan if p["archetype"] not in FOOT)
     lim = max(2, int(round(2 * dur / 60)))
     over = {k: v for k, v in cnt.items() if v > lim}
-    chk("archetype_reuse_limit", not over, over, f"no archetype more than {lim}× per video")
+    chk("archetype_reuse_limit", not over, over, f"no designed card more than {lim}× per video")
     chk("designed_transitions", len(tl.trans) == len(tl.scenes) - 1, len(tl.trans), "every scene boundary has a designed transition (no hard cuts)")
     # text size + safe zones
     small, unsafe, collide = [], [], []
@@ -187,6 +191,10 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
     sig = tl.dna["dna_sig"]
     dims = [diff_count(sig, v["dna_sig"]) for v in hist if v.get("dna_sig")]
     chk("dna_differs_from_past", not dims or min(dims[:5]) >= 4, dims[:5], f"≥ 4 of {len(DIMS)} style dimensions differ from each of the last 5 videos")
+    last_look = next(((v.get("dna_sig") or {}).get("look", "poster") for v in hist if v.get("dna_sig")), None)
+    pinned = "look" in (project.get("dna") or {})
+    chk("look_differs_from_last", last_look is None or last_look != look or pinned, {"this": look, "last": last_look},
+        "the edit format (look) differs from the previous video, unless the operator pinned it")
     if hist:
         sims = []
         for v in hist:

@@ -168,3 +168,18 @@ Tests: 21 → 23 (`test_channel_defaults_lint_hashtags`, `test_channel_log_and_b
 | S-04 | Stale proof frames from earlier runs leaked into reviews | `proof` clears `work/proof_frames/` first |
 | S-05 | A 5-item save card was cut to 4 | `list_reveal` shows up to 5 items |
 | S-06 | Poster card in the "poster_punch" opening covered the face on a poster background | Director note: use `word_smash` + letterbox `y` when the hook still is a poster |
+
+## v2.4: real numbers + 5 top creators (4 Nov 2026)
+
+| # | Operator found / data showed | Fix |
+|---|---|---|
+| R-01 | Ramayan reel: skip 62.7 %, half the viewers gone in the first second. Frame 1 was a white flash, then one word | `hook_slam` `data.frame1`: the whole hook text is on screen at t = 0 with no flash. The Drishyam reel's skip fell to 52.6 % and its views tripled |
+| R-02 | "Har video ek jaisi dikhti hai, bas script badalti hai" | Style DNA **look** (`poster` / `clean` / `rush` / `bar` / `split`) that never repeats the previous video (QA `look_differs_from_last`). Channel defaults no longer pin `caption_style` / `motif` |
+| R-03 | Top creators: bright footage, almost no text on screen | `footage_clean` archetype; light scrim (floor 0.05 instead of 0.42) in clean looks; one graphic card max |
+| R-04 | Top creators: footage band on top, host below | `split_top` + `SplitBackground` (band + face-cam or word panel + seam label) |
+| R-05 | Top creators: a real person on camera | `assets.host`: the operator's selfie video becomes the voice (recording engine, synced for trimmed lead silence) and the `host_cam` / split panel picture. No "AI voice" label then |
+| R-06 | 16:9 trailers lost ~70 % of the picture in a 9:16 crop | `fit: "rotate"` for clips and stills; `fit: "letterbox"` for clips |
+| R-07 | Recurring series identity ("MOST WATCHED SERIES", "1 MIN REVIEW") | `bar` look: persistent series header (`series`, default from the pillar) |
+| R-08 | Our AI voice: 2.7 words/s; the references: 3.3–4.2 | Channel voice rate +28 %; `reel_rules.voice_style` (talk like a person, claim + number first, curiosity gap, callback ending) |
+
+Analysis: `docs/REFERENCE_ANALYSIS.md`. Tests: 25 → 27 (`test_looks_map_beats_and_never_repeat`, `test_rotate_fit_and_split_background_with_host`).

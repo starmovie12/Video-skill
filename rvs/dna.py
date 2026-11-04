@@ -17,7 +17,15 @@ CATEGORIES = ("movie_review", "product", "facts", "story", "software", "game", "
 
 # The DNA dimensions that define "looks different". Novelty is counted over these.
 DIMS = ("palette_family", "hero_font", "background", "motif", "motion", "transitions", "caption_style", "opening",
-        "card_shape", "layout_align", "music_mood", "tone")
+        "card_shape", "layout_align", "music_mood", "tone", "look")
+
+# LOOK = the edit format, the biggest visual lever (see docs/REFERENCE_ANALYSIS.md). Never the same look twice in a row.
+#   poster — designed kinetic-type cards over darkened footage (the original engine look)
+#   clean  — full-bleed bright footage, only the number / name on screen, one graphic card max
+#   rush   — clean + faster cuts (~1.3 s), photo-montage energy
+#   bar    — clean + a persistent series header ("FILMY FACTS", "BOX OFFICE DECODE")
+#   split  — footage band on top + the operator's face-cam (assets.host) or a word panel below
+LOOKS = ("poster", "clean", "rush", "bar", "split")
 
 BACKGROUNDS = ("poster_ambilight", "poster_duotone", "halftone", "mesh", "spotlight", "paper", "grid_tech", "split_tone",
                "poster_mosaic", "bokeh_night")
@@ -302,6 +310,19 @@ def generate(project: dict, poster: Image.Image | None, seed_extra: str = "") ->
             "layout_align": pick("layout_align", ("left", "center", "center", "left")),
             "music_mood": pick("music", MUSIC) if "music_mood" not in over else over["music_mood"],
         }
+        if "look" in over:
+            cand["look"] = over["look"]
+        else:
+            lw = {"poster": 1.0, "clean": 3.0, "rush": 2.0, "bar": 2.0, "split": 1.5}
+            if project.get("_has_host"):
+                lw.update(split=5.0, clean=2.0)
+            if not project.get("_has_media", True):
+                lw = {"poster": 1.0}
+            for k, h in enumerate(history[:2]):  # the operator's rule: a new video must not look like the last ones
+                hl = h.get("look", "poster")  # videos made before looks existed were all "poster"
+                if hl in lw and len(lw) > 1:
+                    lw[hl] *= 0.02 if k == 0 else 0.3
+            cand["look"] = r.wchoice(lw)
         if tone == "light" and cand["background"] in ("grid_tech", "bokeh_night", "spotlight"):
             continue
         pal = build_palette(tone, r, poster_cols, relation=None)
@@ -342,7 +363,7 @@ def generate(project: dict, poster: Image.Image | None, seed_extra: str = "") ->
     dna["dna_sig"] = sig
     if poster_cols:
         dna["poster_palette"] = poster_cols
-    log(f"style DNA: {dna['palette_family']} · font={dna['hero_font']} · bg={dna['background']} · motif={dna['motif']} · "
+    log(f"style DNA: look={dna.get('look')} · {dna['palette_family']} · font={dna['hero_font']} · bg={dna['background']} · motif={dna['motif']} · "
         f"motion={dna['motion']} · captions={dna['caption_style']} · open={dna['opening']} · music={dna['music_mood']} · "
         f"novelty vs last videos={dna['novelty_vs_last'] or 'first video'}")
     return dna

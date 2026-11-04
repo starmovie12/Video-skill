@@ -50,9 +50,10 @@ If the operator asks for a change after reading the PDF:
 | Prompt says | Here |
 |---|---|
 | Input is the creator's script | Claude first writes **Draft-0** from the brief, using the channel template (hook · context · 4–5 beats · ending). Draft-0 is scored **before** any rewrite, honestly, as the "original" |
-| Creator profile | From `channel.json`: Scene Samjho (@scene.samjho1), target 50 s (45–60, hard max 90), AI voice (edge-tts `hindi_male`, or the operator's recording), posting date + slot, niche, MUST AVOID = the channel's `never` list, not sponsored, Part 2 = no unless planned |
+| Creator profile | From `channel.json`: Scene Samjho (@scene.samjho1), target 35 s (25–40 test, hard max 90), AI voice (edge-tts `hindi_male`, or the operator's recording), posting date + slot, niche, MUST AVOID = the channel's `never` list, not sponsored, Part 2 = no unless planned |
 | Tools: FFmpeg, Whisper, Remotion, HyperFrames | This skill's engine (`rvs`: Python + ffmpeg, edge-tts word timing, Whisper alignment for own voice). Production feasibility = buildable with its archetypes (SKILL.md) and licensable media (own or Commons CC) |
 | One CTA: the comment question; voice ends on the loop line | Followed exactly. The last beat's **on-screen** question (`data.question` of `cta_loop`) + caption + pinned comment. One **send-worthy line** names a kind of person ("wo dost jo…"). No "share / like / follow karo" |
+| Voice and tone | Talk like a person, not a narrator: `channel.json` → `reel_rules.voice_style` (from the 5-creator reference analysis, `docs/REFERENCE_ANALYSIS.md`). The tournament's swipe test asks "would a friend say it like this?" |
 | Language | Script lines in Roman Hinglish (`show`). The engine needs a Devanagari `say` with the same word count for the TTS. The spelling lock covers both |
 | Deliverable | `pack/script-pack_<slug>.md` with the 8 strict sections and the YAML handoff (`run.py handover` reads it) |
 
@@ -69,7 +70,8 @@ If the operator asks for a change after reading the PDF:
 
 ## Channel rules always win on
 
-- **Length:** reel ≤ 90 s, aim 45–60 s.
+- **Length:** reel ≤ 90 s, aim 25–40 s (test from 4 Nov 2026).
+- **Look:** a different edit format from the last reel (Style DNA `look`).
 - **Upload:** ≤ 5 hashtags with `#SceneSamjho` first; cover always.
 - **Slot:** times from `channel.json`.
 - **Content:** original content only; facts with sources; theories labelled.

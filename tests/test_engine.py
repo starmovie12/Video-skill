@@ -365,3 +365,54 @@ def test_hook_frame1_text_is_on_screen_at_t0(tmp_path, monkeypatch):
     del hook["data"]
     without, _ = heroes_at_t0(proj)
     assert not without
+
+
+def test_looks_map_beats_and_never_repeat(tmp_path, monkeypatch):
+    """Looks (edit formats): clean → footage scenes with ONE graphic card kept; split → split_top; the DNA never picks the
+    previous video's look again."""
+    from rvs.timeline import apply_look
+    kept = []
+    got = [apply_look("clean", a, i, 6, True, False, kept)
+           for i, a in enumerate(["hook_slam", "kinetic_line", "stat_counter", "fact_bomb", "list_reveal", "cta_loop"])]
+    assert got == ["hook_slam", "footage_clean", "stat_counter", "footage_clean", "footage_clean", "cta_loop"]
+    assert apply_look("split", "fact_bomb", 2, 6, True, False, []) == "split_top"
+    assert apply_look("poster", "fact_bomb", 2, 6, True, False, []) == "fact_bomb"
+    assert apply_look("clean", "fact_bomb", 2, 6, False, False, []) == "fact_bomb"  # no media → keep the designed card
+    monkeypatch.setenv("RVS_HOME", str(tmp_path))
+    proj = json.loads((ROOT / "examples/octopus_facts/project.json").read_text(encoding="utf-8"))
+    proj["_has_media"] = True
+    looks = []
+    for k in range(4):
+        d = D.generate(dict(proj, id=f"look-{k}"), None)
+        looks.append(d["look"])
+        D.save_ledger_entry({"id": f"look-{k}", "dna_sig": d["dna_sig"]})
+    assert all(a != b for a, b in zip(looks, looks[1:])), looks
+    assert D.generate(dict(proj, _has_media=False, id="nomedia"), None)["look"] == "poster"
+
+
+def test_rotate_fit_and_split_background_with_host(tmp_path):
+    import subprocess
+    from PIL import Image
+    from rvs.media import ClipSource, SplitBackground, StillSource
+    wide = tmp_path / "wide.jpg"
+    Image.new("RGB", (1600, 900), (200, 30, 30)).save(wide)
+    s = StillSource(wide, fit="rotate", size=(540, 960))
+    assert s.img.size == (540, 960)
+    host = tmp_path / "host.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=blue:s=360x640:d=2", "-pix_fmt", "yuv420p", str(host)],
+                   check=True)
+    clip = tmp_path / "clip.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=green:s=640x360:d=2", "-pix_fmt", "yuv420p", str(clip)],
+                   check=True)
+    band_h = 840
+    band = [(0.0, ClipSource(clip, 0.0, 2.0, 1.5, size=(W, band_h)))]
+    hs = ClipSource(host, 0.0, 2.0, 1.5, size=(W, H - band_h))
+    bg = SplitBackground(band, band_h, Image.new("RGBA", (W, H), (0, 0, 0, 255)), host=hs)
+    fr = bg.render(None, 0.5).convert("RGB")
+    top, low = fr.getpixel((W // 2, band_h // 2)), fr.getpixel((W // 2, band_h + (H - band_h) // 2))
+    assert top[1] > 100 and top[2] < 80  # green footage band
+    assert low[2] > 150 and low[1] < 80  # blue face-cam panel
+    lb = ClipSource(clip, 0.0, 2.0, 1.5, fit="letterbox", size=(540, 960))
+    assert lb.frame(0.1).size == (540, 960)
+    rc = ClipSource(clip, 0.0, 2.0, 1.5, fit="rotate", size=(540, 960))
+    assert rc.frame(0.1).getpixel((270, 480))[1] > 100

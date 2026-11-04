@@ -80,7 +80,19 @@ Timing sources:
 | ≤ 5 hashtags, `#SceneSamjho` first | Reported 5-hashtag limit; no spam look |
 | `_no_music.mp4` + a trending Instagram audio at 10–15 % | Creator account has the full music library |
 
-## Script template (≈50 s, 130–150 words)
+## Look rotation and the face-cam (from 4 Nov 2026)
+
+- **Every reel gets a different look** (Style DNA `look`):
+  - `clean` — bright footage, only numbers on screen;
+  - `rush` — fast photo cuts;
+  - `bar` — series header;
+  - `split` — footage on top, face-cam or words below;
+  - `poster` — designed text cards.
+- QA fails a reel whose look repeats the previous one.
+- **The single biggest upgrade is the operator on camera.** Record a selfie video reading the script (phone, front camera, vertical, quiet room) → `media/host.mp4` → `"assets": {"host": "media/host.mp4"}`. Its voice replaces the AI voice.
+- See `docs/REFERENCE_ANALYSIS.md` for why: all 5 reference creators show their face.
+
+## Script template (≈35 s, 90–120 words; talk like a person: `reel_rules.voice_style`)
 
 1. **hook** (`hook_slam`): the most surprising fact, ≤ 14 words. No greeting.
 2. **context** (`kinetic_line`): why now (release, trailer, number), ≤ 15 words.
@@ -114,4 +126,5 @@ Timing sources:
 
 | Date | Reel | Numbers | What we change |
 |---|---|---|---|
+| 4 Nov 2026 | Drishyam "2 October yaad hai na?" (39 s) | 481 views, skip 52.6 %, avg watch 5 s, 2 likes, 0 shares, 0 follows (at ~4 h) | Frame-1 hook cut the skip rate by 10 points and tripled views, but people left right after it. Compared with 5 top creators (`docs/REFERENCE_ANALYSIS.md`): they show a real person, bright footage, almost no text, and their layout is nothing like ours. Now: a different look every reel (clean / rush / bar / split / poster), talk like a person (`reel_rules.voice_style`), and the operator's face-cam when possible (`assets.host`). |
 | 4 Nov 2026 | Ramayan 1987 vs 2026 (49 s) | 158 views, skip 62.7 %, avg watch 7 s, 0 shares, 0 follows (at 2 h) | Half the viewers left in the first second. Frame 1 showed a poster with one word, the payoff came at ~4 s, the send line came at 45 s. Now: whole hook text on frame 1, payoff by 2 s, 25–40 s, send line before ~70 %, share-able topics (a meme people already send, a debate, a missed detail). |

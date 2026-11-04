@@ -142,7 +142,9 @@ REF = re.compile(r"^(?P<file>.+?)(?:#(?P<shot>\d+)|@(?P<a>[\d.]+)-(?P<b>[\d.]+))
 
 
 def parse_ref(ref, cat: dict) -> dict | None:
-    """'media/x.mp4#3' | 'media/x.mp4@12-15' | 'media/x.jpg' | {"file": ..., "crop": [x0,y0,x1,y1], "fit": "cover"|"letterbox", "y": band centre}."""
+    """'media/x.mp4#3' | 'media/x.mp4@12-15' | 'media/x.jpg' |
+    {"file": ..., "crop": [x0,y0,x1,y1], "fit": "cover"|"letterbox"|"rotate", "y": band centre}.
+    fit "rotate" turns a landscape still/clip 90° so it fills the whole 9:16 frame (big top-creator trick for 16:9 footage)."""
     if isinstance(ref, dict):
         base = parse_ref(ref["file"], cat)
         if base is None:
@@ -226,14 +228,18 @@ class StillSource:
                 text sits in the upper half, so the text never covers faces."""
     baked = True  # the legibility scrim is baked into the plate once (saves a full-frame composite per frame)
 
-    def __init__(self, path: Path, focus=(0.5, 0.4), scrim: Image.Image | None = None, crop=None, fit=None, y=None):
+    def __init__(self, path: Path, focus=(0.5, 0.4), scrim: Image.Image | None = None, crop=None, fit=None, y=None, size=None):
         from PIL import ImageEnhance, ImageFilter
-        bw, bh = int(W * MARGIN), int(H * MARGIN)
+        bw, bh = size or (int(W * MARGIN), int(H * MARGIN))
         src = Image.open(path).convert("RGB")
         if crop:
             x0, y0, x1, y1 = crop
             src = src.crop((int(x0 * src.width), int(y0 * src.height), int(x1 * src.width), int(y1 * src.height)))
-        fit = fit or ("letterbox" if (not crop and src.width / src.height > 1.25) else "cover")
+        if fit == "rotate":
+            if src.width > src.height:
+                src = src.rotate(-90, expand=True)
+            fit = "cover"
+        fit = fit or ("letterbox" if (not crop and src.width / src.height > 1.25 and bh > bw) else "cover")
         if fit == "letterbox":
             back = ImageOps.fit(src, (bw // 4, bh // 4), Image.Resampling.BILINEAR, centering=focus).filter(ImageFilter.GaussianBlur(9))
             back = ImageEnhance.Brightness(ImageEnhance.Color(back).enhance(1.25)).enhance(0.5).resize((bw, bh), Image.Resampling.BICUBIC)
@@ -267,20 +273,27 @@ class ClipSource:
     """Sequential decoder of one shot: cover-cropped to the 9:16 plate, slow-mo (≥0.5×) if the shot is shorter than the beat,
     holds the last frame after the shot ends. Re-opens itself after fork (each worker owns its own ffmpeg)."""
 
-    def __init__(self, path: Path, start: float, end: float, need: float, grade=""):
+    def __init__(self, path: Path, start: float, end: float, need: float, grade="", fit="cover", size=None, y=None):
         self.path, self.start, self.end = path, start, end
         L = max(0.2, end - start)
         self.rate = max(0.5, min(1.0, L / max(0.1, need)))  # <1 → slow motion
-        self.bw, self.bh = int(W * CLIP_MARGIN) // 2 * 2, int(H * CLIP_MARGIN) // 2 * 2
-        self.grade = grade
+        bw, bh = size or (int(W * CLIP_MARGIN), int(H * CLIP_MARGIN))
+        self.bw, self.bh = int(bw) // 2 * 2, int(bh) // 2 * 2
+        self.grade, self.fit, self.y = grade, fit or "cover", (0.46 if y is None else float(y))
         self.proc, self.next_i, self.pid, self.last = None, None, None, None
 
     def _open(self, i):
         if self.proc:
             self.proc.kill()
         src_t = self.start + i / FPS * self.rate
-        vf = (f"setpts=(PTS-STARTPTS)/{self.rate:.4f},fps={FPS},scale={self.bw}:{self.bh}:force_original_aspect_ratio=increase:flags=bilinear,"
-              f"crop={self.bw}:{self.bh}" + (f",{self.grade}" if self.grade else ""))
+        head = f"setpts=(PTS-STARTPTS)/{self.rate:.4f},fps={FPS}," + ("transpose=1," if self.fit == "rotate" else "")
+        cover = f"scale={self.bw}:{self.bh}:force_original_aspect_ratio=increase:flags=bilinear,crop={self.bw}:{self.bh}"
+        if self.fit == "letterbox":  # whole wide frame sharp in a band, over a blurred darker copy of itself
+            vf = (head + f"split[a][b];[a]{cover},boxblur=20:2,eq=brightness=-0.16:saturation=1.2[bg];"
+                  f"[b]scale={self.bw}:-2:flags=bilinear[fg];[bg][fg]overlay=0:(H-h)*{self.y:.3f}")
+        else:
+            vf = head + cover
+        vf += (f",{self.grade}" if self.grade else "")
         self.proc = subprocess.Popen(["ffmpeg", "-v", "quiet", "-threads", "1", "-ss", f"{src_t:.3f}", "-i", str(self.path), "-an", "-vf", vf,
                                       "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         self.next_i, self.pid = i, os.getpid()
@@ -308,11 +321,12 @@ class FootageBackground:
     """Dynamic background: list of (t_local, source). Camera-aware like Background; adds a legibility scrim."""
     dynamic = True
 
-    def __init__(self, segments, scrim=0.55, depth=0.9, dark=True):
+    def __init__(self, segments, scrim=0.55, depth=0.9, dark=True, floor=0.42):
         self.segments, self.depth, self.ps, self.margin = segments, depth, 1.0, MARGIN
         g = np.linspace(0, 1, H, dtype=np.float32)
-        # top band (status bar/badges), bottom band (captions + IG UI) and a uniform floor so mid-screen text reads on busy footage
-        a = (np.clip(1 - g / 0.28, 0, 1) ** 1.6 * 0.55 + np.clip((g - 0.45) / 0.55, 0, 1) ** 1.3 * 0.75) * scrim + 0.42 * scrim
+        # top band (status bar/badges), bottom band (captions + IG UI) and a uniform floor so mid-screen text reads on busy footage.
+        # Clean looks (little text on screen) use a low floor: the footage stays bright and full-colour like top creators' shorts.
+        a = (np.clip(1 - g / 0.28, 0, 1) ** 1.6 * 0.55 + np.clip((g - 0.45) / 0.55, 0, 1) ** 1.3 * 0.75) * scrim + floor * scrim
         col = (8, 8, 12) if dark else (250, 248, 244)
         self.scrim = Image.new("RGBA", (W, H), col + (0,))
         self.scrim.putalpha(Image.fromarray((np.clip(a, 0, 1)[:, None].repeat(W, 1) * 255).astype(np.uint8)))
@@ -345,18 +359,63 @@ class FootageBackground:
         return fr
 
 
-def build_background(segs, root: Path, dna: dict, dark=True, focus=(0.5, 0.4)):
+CLEAN_LOOKS = ("clean", "rush", "bar")
+
+
+def build_background(segs, root: Path, dna: dict, dark=True, focus=(0.5, 0.4), heavy_text=True):
+    """heavy_text=False (clean looks, footage_clean scenes): a light scrim so the footage stays bright, full-colour."""
     g = dna.get("grade", {})
     grade = f"eq=contrast={g.get('contrast', 1.06) + 0.04:.3f}:saturation={g.get('saturation', 1.08) + 0.07:.3f}"
-    fb = FootageBackground([], scrim=0.62 if dark else 0.35, dark=dark)
+    if heavy_text:
+        fb = FootageBackground([], scrim=0.62 if dark else 0.35, dark=dark)
+    else:
+        fb = FootageBackground([], scrim=0.42, dark=dark, floor=0.05)
     for t, s in segs:
-        p = root / s["file"]
-        if s["kind"] == "image":
-            src = StillSource(p, focus, fb.scrim, crop=s.get("crop"), fit=s.get("fit"), y=s.get("y"))
-        else:
-            src = ClipSource(p, s["start"], s["end"], s.get("need", 2.0), grade)
-        fb.segments.append((t, src))
+        fb.segments.append((t, make_source(root, s, grade, focus, fb.scrim)))
     return fb
+
+
+def make_source(root: Path, s: dict, grade="", focus=(0.5, 0.4), scrim=None, size=None):
+    p = root / s["file"]
+    if s["kind"] == "image":
+        return StillSource(p, focus, scrim, crop=s.get("crop"), fit=s.get("fit"), y=s.get("y"), size=size)
+    return ClipSource(p, s["start"], s["end"], s.get("need", 2.0), grade, fit=s.get("fit") or "cover", size=size, y=s.get("y"))
+
+
+class SplitBackground:
+    """Top-creator split layout: footage in a band at the top (16:9 fits with almost no crop), and below it either the
+    operator's own face-cam (host video, time-synced to the voice) or a solid panel for the beat's words."""
+    dynamic = True
+
+    def __init__(self, band_segments, band_h, panel, host=None, host_t0=0.0):
+        self.band, self.band_h, self.panel, self.host, self.host_t0 = band_segments, int(band_h), panel, host, host_t0
+        self._img = None
+
+    @property
+    def img(self):
+        if self._img is None:
+            self._img = self.render(None, 0.4).convert("RGB")
+        return self._img
+
+    def cut_times(self):
+        return [t for t, _ in self.band[1:]]
+
+    def render(self, cam, t=0.0):
+        fr = self.panel.copy()
+        if self.band:
+            k = max(i for i, (ts, _) in enumerate(self.band) if ts <= max(0.0, t) or i == 0)
+            ts, src = self.band[k]
+            im = src.frame(max(0.0, t - ts))
+            if im.size != (W, self.band_h):
+                im = ImageOps.fit(im, (W, self.band_h), Image.Resampling.BILINEAR)
+            fr.paste(im.convert("RGBA"), (0, 0))
+        if self.host is not None:
+            hi = self.host.frame(max(0.0, t))
+            hh = H - self.band_h
+            if hi.size != (W, hh):
+                hi = ImageOps.fit(hi, (W, hh), Image.Resampling.BILINEAR)
+            fr.paste(hi.convert("RGBA"), (0, self.band_h))
+        return fr
 
 
 # ───────────────────────── Wikimedia Commons (free licences) ─────────────────────────

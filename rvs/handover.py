@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import datetime as dt
 import html
-import json
 import re
 import shutil
 import subprocess
@@ -314,7 +313,7 @@ def build(root: Path, html_only: bool = False) -> dict:
     ch = load_channel() or {}
     sp_md = sp_file.read_text(encoding="utf-8")
     rb_md = rb_file.read_text(encoding="utf-8") if rb_file else ""
-    sp, rb, hy = md_sections(sp_md), md_sections(rb_md), handoff_yaml(sp_md)
+    sp, hy = md_sections(sp_md), handoff_yaml(sp_md)
     title = str(hy.get("title") or p.get("title") or root.name)
     slug = _slug(str(hy.get("slug") or title))
     accent = (dna.get("palette") or {}).get("accent", "#E4572E")

@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from .core import Rng, clamp, ensure_contrast, extract_palette, from_oklch, hue_name, log, read_json, rvs_home, stable_seed, state_home, write_json
+from .core import Rng, clamp, ensure_contrast, extract_palette, from_oklch, hue_name, log, read_json, stable_seed, state_home, write_json
 from .typo import REG
 
 CATEGORIES = ("movie_review", "product", "facts", "story", "software", "game", "generic")

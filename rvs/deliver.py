@@ -97,8 +97,8 @@ def upload_pack(project: dict, tl, qa: dict, out: Path, root: Path, cover: dict)
                     f"- Post at {when}",
                     f"- Stories ({sch.get('stories_per_day', '')}/day): {stories}",
                     f"- Stay online {sch.get('reply_window_min', 60)} min after posting and reply to every comment",
-                    f"- Then: `python run.py log <project> --status posted`, and after 24 h add Insights numbers "
-                    f"(--views --skip-rate --avg-watch --sends --follows)", ""]
+                    "- Then: `python run.py log <project> --status posted`, and after 24 h add Insights numbers "
+                    "(--views --skip-rate --avg-watch --sends --follows)", ""]
     lines = [f"# Upload pack — {project.get('title', '')}", "", *ch_lines,
              "## Caption (draft — Director: rewrite in your own words, keep facts exact)", "",
              f"{hook}", "", f"{question} 👇", "", " ".join(tags), "",

@@ -236,14 +236,7 @@ How a look maps beats (automatic, `rvs/timeline.py::apply_look`):
 - Beats without media keep their designed card. Set `"keep_archetype": true` on a beat to opt it out.
 - `data.tag` sets the one line a clean or split scene shows. Otherwise it comes from `big`, `value`+`suffix`, `left` vs `right`, or `title`.
 
-**Presenter photo (the channel's face, on by default):** `channel/host/host_cutout.png` is the operator's photo with the background removed (`channel.json` → `host`). Every channel project loads it automatically:
-- **Hook:** the waist-up cut-out at the bottom of frame 1, with the hook text above it. This is the top creators' first frame (face + claim). Pick a hook still whose subject sits in the **upper** half (letterbox `"y": 0.35`) so the presenter does not hide it.
-- **`footage_clean` scenes:** the same waist-up cut-out at the bottom; captions move above his head (`cap_y` 845).
-- **`split_top` scenes:** head-and-shoulders in the lower panel when there is no face-cam video.
-- **`host_cam` beats:** big, over the footage.
-- **Cover:** his cut-out + the claim above it, with an accent glow behind.
-- **Motion:** it lifts and swells slightly on every spoken word (`idle: "talk"`). The mouth does not move, because it is a photo. Designed cards (`stat_counter`, `cta_loop`, …) never show it. Stickers never land on it.
-- **Turn it off:** `"presenter": false` in project.json. Another transparent PNG: `"presenter": "media/x.png"`.
+**No still photo of the host.** On 4 Nov 2026 the operator tried his photo as an on-screen presenter and rejected it: the mouth and hands do not move, so it does not look real. The photo was deleted from the skill. Do not add a host photo or an animated still again. The host appears only through a real selfie video (below). `"presenter": "media/x.png"` still exists as an explicit opt-in for a non-person cut-out (a logo or mascot) and is off by default.
 
 **Host (the operator on camera), the strongest upgrade:** all 5 reference creators show their own face. Put the operator's selfie recording (vertical, reading the script) at `media/host.mp4` and set `"assets": {"host": "media/host.mp4"}`:
 - its audio becomes the voice-over (engine `recording`, Whisper alignment; no AI voice, so no AI-voice disclosure for the voice);

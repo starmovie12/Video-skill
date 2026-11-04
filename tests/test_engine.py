@@ -419,13 +419,12 @@ def test_rotate_fit_and_split_background_with_host(tmp_path):
 
 
 def test_presenter_on_hook_and_footage_scenes(tmp_path, monkeypatch):
-    """The channel host's cut-out: on the hook (frame 1) and on footage_clean scenes, moving on spoken words, captions
-    moved above the head; never on designed cards."""
+    """An explicit presenter cut-out (opt-in only, no channel photo): on the hook (frame 1) and on footage_clean scenes,
+    moving on spoken words, captions moved above it; never on designed cards. Without one, no scene shows a presenter."""
     from PIL import Image
-    from rvs.channel import host_cutout
-    from rvs.timeline import Timeline
+    from rvs.timeline import Timeline, load_assets
     monkeypatch.setenv("RVS_HOME", str(tmp_path))
-    assert host_cutout() is not None and Image.open(host_cutout()).mode == "RGBA"
+    assert "presenter" not in load_assets({"channel": {"handle": "@x"}}, tmp_path)  # never on by default
     proj = json.loads((ROOT / "examples/octopus_facts/project.json").read_text(encoding="utf-8"))
     proj["beats"][0]["archetype"] = "hook_slam"
     proj["beats"][0]["data"] = {"frame1": " ".join(proj["beats"][0]["show"].split()[:3])}

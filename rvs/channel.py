@@ -37,16 +37,6 @@ def _merge(base, over):
     return over
 
 
-def host_cutout(ch: dict | None = None):
-    """The channel presenter's cut-out photo (channel.json → host.cutout, relative to the channel folder), or None."""
-    ch = ch if ch is not None else load()
-    rel = ((ch or {}).get("host") or {}).get("cutout")
-    if not rel:
-        return None
-    f = channel_dir() / rel
-    return f if f.exists() else None
-
-
 def apply_defaults(project: dict, ch: dict | None = None) -> dict:
     """Fill channel defaults into a project. Anything the project already sets wins."""
     ch = ch if ch is not None else load()

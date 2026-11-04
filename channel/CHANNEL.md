@@ -80,16 +80,10 @@ Timing sources:
 | ≤ 5 hashtags, `#SceneSamjho` first | Reported 5-hashtag limit; no spam look |
 | `_no_music.mp4` + a trending Instagram audio at 10–15 % | Creator account has the full music library |
 
-## The channel's face (from 4 Nov 2026)
+## The channel's face
 
-- The operator's photo is in `channel/host/`: `host.jpg` (original) and `host_cutout.png` (background removed).
-- It appears in every video:
-  - on frame 1 under the hook;
-  - at the bottom of footage scenes;
-  - in the lower panel of split scenes;
-  - on the cover.
-- It is a still photo: it moves with the voice, but the mouth does not.
-- For a real talking face, record a selfie video (see below).
+- **No still photo.** The operator's photo was tried as a presenter on 4 Nov 2026 and removed at his request: the mouth and hands do not move, so it does not look real.
+- The host appears only through a **real selfie video** (`assets.host`).
 
 ## Look rotation and the face-cam (from 4 Nov 2026)
 

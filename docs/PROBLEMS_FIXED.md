@@ -188,4 +188,6 @@ Analysis: `docs/REFERENCE_ANALYSIS.md`. Tests: 25 → 27 (`test_looks_map_beats_
 |---|---|---|
 | R-09 | "Meri photo har video mein aaye, mera look" | `channel/host/` (photo + background-removed cut-out, `channel.json` → `host`); presenter on the hook, `footage_clean`, `split_top` panel, `host_cam` and the cover; `idle: "talk"` (moves on every spoken word); per-scene caption line `cap_y` above his head; stickers never land on him; openings that would cover frame 1 (`split_reveal`, `countdown`, `rating_first`) are swapped when `frame1` is set |
 
-Tests: 27 → 28 (`test_presenter_on_hook_and_footage_scenes`).
+| R-10 | "Photo hata do: na munh hil raha hai na haath-pair, real nahi lagta" | Photo and cut-out deleted from `channel/host/`; `channel.json` → `host` removed; no automatic presenter (only an explicit `"presenter"` path, off by default); `never` list: no still-photo presenter. The host appears only via a real selfie video (`assets.host`) |
+
+Tests: 27 → 28 (`test_presenter_on_hook_and_footage_scenes`, now: never on by default).

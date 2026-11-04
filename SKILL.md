@@ -179,7 +179,7 @@ For every beat decide what the line *means* and which media plus graphic shows i
 
 | role (beat) | archetype | variants | data needed |
 |---|---|---|---|
-| hook | `hook_slam` | opening = word_smash / poster_punch / rating_first / question_flash / split_reveal / countdown | optional `frame1` (+ `frame1_words`): the whole hook text is on screen from t = 0, no white flash; the rest of the hook line builds below it. Channel rule: use it on every reel (Reels-tab viewers judge the first frame) |
+| hook | `hook_slam` | opening = word_smash / poster_punch / rating_first / question_flash / split_reveal / countdown | optional `badges: [{text, color, ink?, x?, fall_at?}]` (plain letter squares, e.g. an "A" vs a "U" rating; `fall_at` = the word that knocks one off), optional `frame1` (+ `frame1_words`): the whole hook text is on screen from t = 0, no white flash; the rest of the hook line builds below it. Channel rule: use it on every reel (Reels-tab viewers judge the first frame) |
 | intro / title | `poster_hero` | tilt_card / full_bleed / framed | `title`, `chips` (needs poster) |
 | story / plot | `story_panels` | stack / filmstrip / split | `points` (2–3 short phrases) |
 | cast | `cast_spotlight` | portraits / lower_third / big_name | `cast: [{name, role, image?, image_focus?}]` |
@@ -192,6 +192,7 @@ For every beat decide what the line *means* and which media plus graphic shows i
 | fact | `fact_bomb` | – | `big`, `line` |
 | compare / vs | `split_compare` | – | `left{title,sub}`, `right{title,sub}` |
 | list | `list_reveal` | – | `items`, `title` |
+| rank / states | `rank_bars` | rows | `title`, `note`, `bars: [{label, value, value_label?, reveal_at, cross?, winner?}]` — rows grow with "?" names; each name pops on its spoken word; `cross` strikes it in red, `winner` slams in with an impact. List the winner first |
 | timeline | `timeline` | – | `events: [{year,label}]` |
 | product | `product_hero` | float / arch | `name`, `tag` |
 | price | `price_tag` | swinging tag + strike-through | `price`, `old_price`, `note` |
@@ -209,6 +210,12 @@ QA requires:
 - **Product, 15–25 s:** hook → product → features → price → cta. Use many product photos in `media/`.
 - **Facts, 25–40 s:** hook → fact → compare / stat → line → cta
 - **Story, 40–60 s:** hook → chapter → line → timeline → quote → cta
+
+**Per-beat and per-project Director overrides:**
+- `"pause_before": {"KARNATAKA": 0.9}` on a beat: a deliberate silence (seconds) before a reveal word. This is the script's "(...)".
+- `data.scrim: "heavy" | "light"` on a beat: force a dark or a bright footage plate (e.g. a near-black frame 1 under badges in a clean look).
+- `"keep_archetype": true` on a beat: the look does not convert it (keep a designed graphic).
+- `"cover_time": 12.4` and `"cover_y": 0.2` in project.json: the cover's background frame, and where its text sits in the 4:5 box. Move the text off a face.
 
 **Style DNA overrides (optional, only with a creative reason):** `"dna": {...}` can force any of:
 - `tone`, `background`, `background2`, `motif`, `motion`, `transitions`, `opening`, `card_shape`, `layout_align`, `music_mood`, `fonts`, `sticker_rate`

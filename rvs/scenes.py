@@ -138,6 +138,8 @@ def make_bg(ctx: Ctx, kind=None, variant_seed=0) -> Background:
         from .media import CLEAN_LOOKS, build_background
         light = ctx.beat["archetype"] in ("footage_clean", "host_cam") or (
             ctx.dna.get("look") in CLEAN_LOOKS and ctx.beat["archetype"] in ("hook_slam", "cta_loop"))
+        if ctx.data.get("scrim") in ("heavy", "light"):  # Director override per beat
+            light = ctx.data["scrim"] == "light"
         return build_background(ctx.footage, ctx.assets["root"], ctx.dna, dark=True, heavy_text=not light)
     if kind is None:
         kind = ctx.dna["background"] if ctx.idx % 3 != 1 else ctx.dna.get("background2", ctx.dna["background"])
@@ -502,6 +504,9 @@ def hook_slam(ctx: Ctx, sc):
     else:
         flash = Image.new("RGBA", (W, H), (255, 255, 255, 255))
         sc.add(Layer(Sprite(flash, 0.5, 0.5), W / 2, H / 2, z=2.0, t_in=0.0, t_out=0.0, exit="fade", enter="none", role="deco"))
+    if ctx.data.get("badges"):
+        box = (box[0], box[1], box[2], min(box[3], 820))
+        add_badges(ctx, sc, ctx.data["badges"], y=1010)
     if ctx.assets.get("presenter") is not None and not ctx.data.get("no_presenter"):
         add_presenter(ctx, sc, "bottom")  # the channel host's face on frame 1, under the hook text (top creators' first frame)
         box = (box[0], box[1], box[2], min(box[3], 905))
@@ -1503,6 +1508,89 @@ def add_presenter(ctx: Ctx, sc, mode="bottom", top=None):
     return ly
 
 
+def add_badges(ctx: Ctx, sc, badges, y=1010):
+    """Big letter badges (plain code-made squares, e.g. an "A" vs a "U" rating) on frame 1. A badge with "fall_at" (a spoken
+    word) is knocked off and drops out of frame when that word is said. Never a copy of an official certificate design."""
+    n = len(badges)
+    for i, b in enumerate(badges):
+        size = int(b.get("size", 300))
+        card = gfx.card(size, size, fill=b.get("color", ctx.pal["accent"]), alpha=255, kind="rounded", r=int(size * 0.16))
+        ring = gfx.card(size - 28, size - 28, fill="#000000", alpha=0, kind="rounded", r=int(size * 0.13), border="#FFFFFF", border_w=10)
+        card.alpha_composite(ring, (14, 14))
+        let = text_sprite(str(b.get("text", "?")), ctx.F["hero"], int(size * 0.62), color=b.get("ink", "#FFFFFF"), box=(size, size),
+                          max_lines=1, role="label")
+        card.alpha_composite(let.img, ((size - let.w) // 2, (size - let.h) // 2))
+        im = gfx.with_shadow(card, 24, 0.6, 16)
+        x = W * float(b.get("x", (i + 1) / (n + 1)))
+        t_out = ctx.t_word(b["fall_at"], 0.6) if b.get("fall_at") else None
+        sc.add(ctx.layer(Sprite(im, 0.5, 0.5), x, y, z=1.05, t_in=0.0, enter="none", idle="breathe", t_out=t_out, exit="fall",
+                         exit_dur=0.8, role="image"))
+        if t_out is not None:
+            sc.cue(t_out, "impact", 0.9)
+            sc.cam.shake(t_out + 0.02, 18, 0.35)
+
+
+@archetype("rank_bars", roles=("rank", "bars", "states", "ranking"), variants=("rows",))
+def rank_bars(ctx: Ctx, sc):
+    """A guessing-game ranking, readable on a phone: one row per item, bars grow first with the names hidden ("?"), then each
+    name pops on its spoken word ("reveal_at"). "cross": true strikes the name through in red; "winner": true gets the accent
+    colour, a bigger name and an impact hit. data: {title, note, bars: [{label, value, value_label, reveal_at, cross, winner}]}
+    — list the rows top to bottom in the order they should read (usually the winner first)."""
+    p, d = ctx.pal, ctx.data
+    bars = list(d.get("bars") or [])[:4]
+    sc.bg = make_bg(ctx)
+    camera_for(ctx, sc, "push")
+    y = ctx.top + 10
+    if d.get("title"):
+        tt = ctx.hero(d["title"], (960, 230), max_lines=2, max_px=104, min_px=60, role="hero")
+        th = tt.h - 2 * tt.meta["pad"]
+        sc.add(ctx.layer(tt, W / 2, y + th / 2, z=1.0, t_in=0.0, enter=ctx.enter("hero"), role="hero"))
+        y += th + 50
+    vmax = max(float(b.get("value", 1)) for b in bars) if bars else 1.0
+    x0 = SAFE["left"] + 10
+    max_w = SAFE["right_low"] - x0 - 10
+    row_h = min(250, (ctx.bottom - 60 - y) / max(1, len(bars)))
+    rise_end = ctx.dur * 0.38
+    for i, b in enumerate(bars):
+        ry = y + i * row_h
+        bar_y = ry + row_h * 0.62
+        w_full = max_w * float(b.get("value", 1)) / vmax
+        col = p["accent"] if b.get("winner") else mix_hex(p["text"], p["bg0"], 0.45)
+
+        def bar_fn(tl, w_full=w_full, col=col, i=i):
+            q = round(ease_out_cubic(clamp((tl - 0.1 - 0.15 * i) / max(0.3, rise_end))) * 40) / 40
+            ww = max(4, int(w_full * q))
+            return q, (lambda ww=ww: Sprite(gfx.card(ww, 70, fill=col, alpha=255, kind="rounded", r=16), 0.0, 0.5))
+        sc.add(DynLayer(bar_fn, x0, bar_y, z=1.0, enter="none", motion=ctx.motion, role="deco"))
+        t_r = ctx.t_word(b["reveal_at"], 0.7) if b.get("reveal_at") else ctx.dur * 0.7
+        q_mark = ctx.hero("?", (200, 110), max_lines=1, max_px=96, color=p["muted"], role="label", align="left")
+        q_mark.ax = 0.0
+        sc.add(ctx.layer(q_mark, x0 - q_mark.meta["pad"], ry + row_h * 0.22, z=1.05, t_in=0.3 + 0.15 * i, t_out=t_r, enter="pop",
+                         exit="pop_out", role="label"))
+        name_col = "#FF4D4D" if b.get("cross") else (p["accent"] if b.get("winner") else p["text"])
+        lab = ctx.hero(str(b.get("label", "")), (max_w, 120), max_lines=1, max_px=110 if b.get("winner") else 84, min_px=52,
+                       color=name_col, role="label", align="left")
+        lab.ax = 0.0
+        sc.add(ctx.layer(lab, x0 - lab.meta["pad"], ry + row_h * 0.22, z=1.1, t_in=t_r, enter="slam" if b.get("winner") else "pop",
+                         role="label"))
+        if b.get("cross"):
+            lw = lab.w - 2 * lab.meta["pad"]
+            strike = gfx.card(int(lw + 20), 14, fill="#FF4D4D", alpha=255, kind="rounded", r=7)
+            sc.add(ctx.layer(Sprite(strike, 0.0, 0.5), x0 - 10, ry + row_h * 0.22, z=1.12, t_in=t_r + 0.25, enter="slide",
+                             enter_dir=(-1, 0), role="deco"))
+        val = b.get("value_label") or (f"₹{float(b['value']):.2f} CR" if b.get("value") is not None else "")
+        if val:
+            vs = ctx.body(val, (300, 70), px=46, color=p["ink"] if b.get("winner") else p["text"], max_lines=1, role="label")
+            vx = x0 + min(w_full, max_w) - (vs.w - 2 * vs.meta["pad"]) / 2 - 18
+            sc.add(ctx.layer(vs, vx, bar_y, z=1.1, t_in=t_r + 0.1, enter="pop", role="label"))
+        sc.cue(t_r, "impact" if b.get("winner") else "pop", 1.0 if b.get("winner") else 0.6)
+        if b.get("winner"):
+            sc.cam.shake(t_r + 0.03, 22, 0.4)
+    if d.get("note"):
+        nt = ctx.body(d["note"], (900, 60), px=34, color=p["muted"], max_lines=1, role="label")
+        sc.add(ctx.layer(nt, W / 2, ctx.bottom - 30, z=1.0, t_in=0.2, enter="rise", role="label"))
+
+
 @archetype("footage_clean", roles=("fact", "story", "line", "context", "stat", "compare", "opinion", "list", "cast"),
            variants=("news", "label"))
 def footage_clean(ctx: Ctx, sc):
@@ -1571,7 +1659,7 @@ def host_cam(ctx: Ctx, sc):
     _tag_layer(ctx, sc, beat_tag(ctx), SAFE["top"] + 120, "news")
 
 
-ROLE_DEFAULTS = {"hook": "hook_slam", "intro": "poster_hero", "title": "poster_hero", "rating": "rating_meter", "story": "story_panels",
+ROLE_DEFAULTS = {"rank": "rank_bars", "hook": "hook_slam", "intro": "poster_hero", "title": "poster_hero", "rating": "rating_meter", "story": "story_panels",
                  "plot": "story_panels", "cast": "cast_spotlight", "performance": "cast_spotlight", "pros_cons": "pros_cons", "pros": "pros_cons",
                  "cons": "pros_cons", "quote": "quote_kinetic", "opinion": "quote_kinetic", "verdict": "verdict_stamp", "cta": "cta_loop",
                  "stat": "stat_counter", "list": "list_reveal", "compare": "split_compare", "fact": "fact_bomb", "timeline": "timeline",

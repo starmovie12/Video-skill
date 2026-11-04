@@ -549,6 +549,11 @@ def _assemble(project, vcfg, beats, clips, used, timing, work) -> dict:
             x, tw = tighten(x, tw, toks)
             ref = show if len(show) == len(toks) else toks  # hero words are written in the caption (show) form
             x, tw = hero_pauses(x, tw, ref, {_norm(h) for hw in b.get("hero", []) for h in hw.split()})
+            if b.get("pause_before"):  # {"KARNATAKA": 0.9}: a deliberate silence before a reveal word (script "(...)")
+                want = {_norm(k): float(v) for k, v in b["pause_before"].items()}
+                ins = [(max(tw[i - 1][1], tw[i][0] - 0.01), want[_norm(t)] - max(0.0, tw[i][0] - tw[i - 1][1]))
+                       for i, t in enumerate(ref) if i > 0 and _norm(t) in want and want[_norm(t)] > tw[i][0] - tw[i - 1][1]]
+                x, tw = _apply_edits(x, tw, inserts=ins)
         start = cur
         k, m = len(toks), len(show)
         if m == k:

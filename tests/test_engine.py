@@ -442,3 +442,26 @@ def test_presenter_on_hook_and_footage_scenes(tmp_path, monkeypatch):
     assert clean and all(s in talk and s.meta.get("cap_y") for s in clean)
     assert not any(s in talk for s in tl.scenes if s.archetype in ("stat_counter", "cta_loop"))
     assert tl.frame(0.0).size == (W, H)
+
+
+def test_badges_fall_and_rank_bars_reveal(tmp_path, monkeypatch):
+    """Frame-1 letter badges (one falls on its word) and the rank_bars guessing game (names hidden until spoken)."""
+    from rvs.timeline import Timeline
+    monkeypatch.setenv("RVS_HOME", str(tmp_path))
+    proj = json.loads((ROOT / "examples/octopus_facts/project.json").read_text(encoding="utf-8"))
+    w0 = proj["beats"][0]["show"].split()
+    proj["beats"][0].update(archetype="hook_slam", data={"frame1": " ".join(w0[:3]), "frame1_words": 99,
+                                                         "badges": [{"text": "A", "color": "#C8102E", "fall_at": w0[-1]}, {"text": "U"}]})
+    w1 = proj["beats"][1]["show"].split()
+    proj["beats"][1].update(archetype="rank_bars", keep_archetype=True,
+                            data={"title": "TOP", "bars": [{"label": "ONE", "value": 9, "reveal_at": w1[-1], "winner": True},
+                                                           {"label": "TWO", "value": 7, "reveal_at": w1[2], "cross": True}]})
+    d = D.generate(proj, None)
+    tl = Timeline(proj, _fake_voice(proj["beats"]), d, {"root": tmp_path}).build_all()
+    hook, bars = tl.scenes[0], tl.scenes[1]
+    falling = [ly for ly in hook.layers if getattr(ly, "exit", "") == "fall" and ly.t_out is not None]
+    assert len(falling) == 1 and falling[0].t_out is not None
+    assert falling[0].state(falling[0].t_out + 2.0) is None  # gone after the fall
+    labels = [ly for ly in bars.layers if getattr(ly, "role", "") == "label" and ly.t_in > 0.3]
+    assert labels and all(ly.t_in > 0.3 for ly in labels)
+    assert tl.frame(bars.t0 + 0.5).size == (W, H)

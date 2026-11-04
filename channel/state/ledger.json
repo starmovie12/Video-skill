@@ -309,6 +309,72 @@
           "follow"
         ]
       ]
+    },
+    {
+      "id": "2026-11-05-ramayana-record",
+      "title": "Ranbir vs Ranbir: A-rated ka record, U-rated ne toda",
+      "category": "movie_review",
+      "date": "2026-11-04 18:54",
+      "dna_sig": {
+        "palette_family": "dark-yellow-blue",
+        "hero_font": "rozha",
+        "background": "spotlight",
+        "motif": "sparkles",
+        "motion": "heavy",
+        "transitions": "luma_fade,zoom_through",
+        "caption_style": "underline",
+        "opening": "countdown",
+        "card_shape": "ticket",
+        "layout_align": "center",
+        "music_mood": "epic_trailer",
+        "tone": "dark",
+        "look": "clean"
+      },
+      "frame_hashes": [
+        "ffe7f3decec6f141",
+        "02c3c2e4e8e0f0b0",
+        "0c44eec390e0b030",
+        "0000e0fc02c83838",
+        "3f5f2361e1e9373f",
+        "f0e0f0f0e0f0b0b8",
+        "8098a48485808f0b",
+        "44e8eca8e8badcb0"
+      ],
+      "qa_passed": true,
+      "plan": [
+        [
+          "hook_slam",
+          "word_smash"
+        ],
+        [
+          "fact_bomb",
+          "big"
+        ],
+        [
+          "stat_counter",
+          "arc"
+        ],
+        [
+          "split_compare",
+          "stacked"
+        ],
+        [
+          "footage_clean",
+          "label"
+        ],
+        [
+          "rank_bars",
+          "rows"
+        ],
+        [
+          "list_reveal",
+          "numbers"
+        ],
+        [
+          "cta_loop",
+          "follow"
+        ]
+      ]
     }
   ]
 }

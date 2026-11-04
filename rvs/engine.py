@@ -174,7 +174,12 @@ class Layer:
             elif self.exit == "slide_out":
                 x += self.enter_dir[0] * 300 * ease_in_out_cubic(q)
                 y += self.enter_dir[1] * 300 * ease_in_out_cubic(q)
-            a *= 1 - q
+            elif self.exit == "fall":  # knocked off: drops with gravity and tips over (a broken badge, a beaten record)
+                y += 1400 * q * q
+                r += 28 * q
+                a *= 1 - q * q
+                q = min(q, 0.999)
+            a *= 1 - q if self.exit != "fall" else 1.0
             if q >= 1:
                 return None
         if a <= 0.003:

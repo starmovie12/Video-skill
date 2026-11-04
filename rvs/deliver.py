@@ -30,7 +30,7 @@ def best_cover_time(tl) -> float:
 
 def make_cover(tl, project: dict, out_dir: Path) -> dict:
     pal, F = tl.dna["palette"], tl.dna["fonts"]
-    t = best_cover_time(tl)
+    t = float(project["cover_time"]) if project.get("cover_time") is not None else best_cover_time(tl)  # Director override
     base = tl.background_frame(t)
     base = ImageEnhance.Brightness(base).enhance(0.62)
     im = base.convert("RGBA")
@@ -39,7 +39,7 @@ def make_cover(tl, project: dict, out_dir: Path) -> dict:
     tsp = text_sprite(apply_case(text, "upper"), F["hero"], None, deva_fid=F["deva"], color="#FFFFFF", box=(920, 520), max_lines=3,
                       max_px=230, min_px=80, stroke=0.05, stroke_color="#000000", shadow=(0, 10, 18, 0.8, "#000000"),
                       highlight={re.sub(r"\W", "", w.lower()) for w in text.split()[-1:]}, highlight_color=pal["accent"])
-    y_mid = 285 + (1635 - 285) * 0.45  # centre of the 4:5 grid-safe box
+    y_mid = 285 + (1635 - 285) * float(project.get("cover_y", 0.45))  # centre of the 4:5 grid-safe box; cover_y moves it off a face
     pres = tl.assets.get("presenter")
     if pres is not None:  # top creators' cover: the host's face + one short claim (docs/REFERENCE_ANALYSIS.md)
         tsp = text_sprite(apply_case(text, "upper"), F["hero"], None, deva_fid=F["deva"], color="#FFFFFF", box=(960, 430), max_lines=3,

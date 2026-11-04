@@ -483,9 +483,22 @@ def hook_slam(ctx: Ctx, sc):
         sc.add(Layer(Sprite(streak.rotate(-12, expand=True), 0.5, 0.5), W / 2, 560, z=0.6, t_in=0.0, t_out=0.35, enter="slide",
                      enter_dir=(1, 0), travel=1600, role="deco", motion="snappy"))
         box = (SAFE["left"] + 10, 360, SAFE["right_top"] - 10, SAFE["bottom"] - 40)
-    flash = Image.new("RGBA", (W, H), (255, 255, 255, 255))
-    sc.add(Layer(Sprite(flash, 0.5, 0.5), W / 2, H / 2, z=2.0, t_in=0.0, t_out=0.0, exit="fade", enter="none", role="deco"))
-    kinetic_stack(ctx, sc, words, box, max_words_page=8)
+    frame1 = str(ctx.data.get("frame1") or "").strip()
+    if frame1:
+        # Frame-1 hook: the whole hook text is already on screen at t=0 (Reels-tab viewers judge the first frame, not
+        # the cover). The spoken words it covers are not stacked again; the rest of the hook line builds below it.
+        t1 = ctx.hero(frame1, (940, 560), max_lines=3, max_px=210, color=p["accent"], role="hero")
+        h1 = t1.h - 2 * t1.meta["pad"]
+        y1 = max(box[1], ctx.top + 40)
+        sc.add(ctx.layer(t1, W / 2, y1 + h1 / 2, z=1.1, t_in=0.0, enter="none", idle="pulse", role="hero"))
+        skip = int(ctx.data.get("frame1_words", len(frame1.split())))
+        words = words[skip:]
+        box = (box[0], y1 + h1 + 50, box[2], box[3])
+    else:
+        flash = Image.new("RGBA", (W, H), (255, 255, 255, 255))
+        sc.add(Layer(Sprite(flash, 0.5, 0.5), W / 2, H / 2, z=2.0, t_in=0.0, t_out=0.0, exit="fade", enter="none", role="deco"))
+    if words:
+        kinetic_stack(ctx, sc, words, box, max_words_page=8)
     add_motif(ctx, sc)
 
 

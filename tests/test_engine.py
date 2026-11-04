@@ -340,3 +340,28 @@ def test_handover_markdown_and_sections():
     assert "<ul><li>one<ul><li>sub</li></ul></li><li>☐ todo</li></ul>" in h2 and "<ol><li>first</li></ol>" in h2 and "callout" in h2
     y = handoff_yaml(md)
     assert y["title"] == "T" and y["hashtags"] == ["#A"]
+
+
+def test_hook_frame1_text_is_on_screen_at_t0(tmp_path, monkeypatch):
+    """hook_slam data.frame1: the whole hook text is a hero layer from t=0 (no white flash), and the spoken words it covers
+    are not stacked a second time."""
+    monkeypatch.setenv("RVS_HOME", str(tmp_path))
+    from rvs.timeline import Timeline
+    proj = json.loads((ROOT / "examples/octopus_facts/project.json").read_text(encoding="utf-8"))
+    hook = proj["beats"][0]
+    hook["archetype"] = "hook_slam"
+    first3 = " ".join(hook["show"].split()[:3])
+    hook["data"] = {"frame1": first3}
+
+    def heroes_at_t0(p):
+        tl = Timeline(p, _fake_voice(p["beats"]), D.generate(p, None), {}).build_all()
+        sc = tl.scenes[0]
+        sc.ensure()
+        return [ly for ly in sc.layers if ly.role == "hero" and ly.t_in == 0.0], sc
+
+    with_f1, sc = heroes_at_t0(proj)
+    assert len(with_f1) == 1
+    assert not any(ly.role == "deco" and ly.t_out == 0.0 for ly in sc.layers)  # no white flash over frame 1
+    del hook["data"]
+    without, _ = heroes_at_t0(proj)
+    assert not without

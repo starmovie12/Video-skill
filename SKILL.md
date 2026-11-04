@@ -177,7 +177,7 @@ For every beat decide what the line *means* and which media plus graphic shows i
 
 | role (beat) | archetype | variants | data needed |
 |---|---|---|---|
-| hook | `hook_slam` | opening = word_smash / poster_punch / rating_first / question_flash / split_reveal / countdown | – (spoken words become giant kinetic type) |
+| hook | `hook_slam` | opening = word_smash / poster_punch / rating_first / question_flash / split_reveal / countdown | optional `frame1` (+ `frame1_words`): the whole hook text is on screen from t = 0, no white flash; the rest of the hook line builds below it. Channel rule: use it on every reel (Reels-tab viewers judge the first frame) |
 | intro / title | `poster_hero` | tilt_card / full_bleed / framed | `title`, `chips` (needs poster) |
 | story / plot | `story_panels` | stack / filmstrip / split | `points` (2–3 short phrases) |
 | cast | `cast_spotlight` | portraits / lower_third / big_name | `cast: [{name, role, image?, image_focus?}]` |

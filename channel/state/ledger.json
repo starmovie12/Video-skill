@@ -239,6 +239,76 @@
           "question"
         ]
       ]
+    },
+    {
+      "id": "2026-11-04-drishyam-2-october",
+      "title": "2 October yaad hai na? Drishyam aur ek tareekh",
+      "category": "movie_review",
+      "date": "2026-11-04 09:53",
+      "dna_sig": {
+        "palette_family": "dark-orange-teal",
+        "hero_font": "teko",
+        "background": "split_tone",
+        "motif": "dust",
+        "motion": "heavy",
+        "transitions": "glitch,shutter,whip",
+        "caption_style": "viral",
+        "opening": "question_flash",
+        "card_shape": "sharp",
+        "layout_align": "center",
+        "music_mood": "dark_pulse",
+        "tone": "dark"
+      },
+      "frame_hashes": [
+        "0e060a898584448b",
+        "060f0303db18383f",
+        "0d0f0f1fe1c1171d",
+        "e7f31998a8fcdc68",
+        "d7b3b17171e06923",
+        "91a00183050360c1",
+        "06071b0f4bf1d078",
+        "0d0d0f1771131f0d",
+        "0c32f023858c4c0b"
+      ],
+      "qa_passed": true,
+      "plan": [
+        [
+          "hook_slam",
+          "question_flash"
+        ],
+        [
+          "kinetic_line",
+          "stack"
+        ],
+        [
+          "fact_bomb",
+          "big"
+        ],
+        [
+          "stat_counter",
+          "bar"
+        ],
+        [
+          "kinetic_line",
+          "stack"
+        ],
+        [
+          "fact_bomb",
+          "big"
+        ],
+        [
+          "stat_counter",
+          "bar"
+        ],
+        [
+          "split_compare",
+          "stacked"
+        ],
+        [
+          "cta_loop",
+          "follow"
+        ]
+      ]
     }
   ]
 }

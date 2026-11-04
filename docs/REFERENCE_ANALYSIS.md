@@ -22,15 +22,13 @@
 | Median shot | 1.9 s | 1.3 s | ~2 s in the footage band* | 1.2 s | 0.8 s | ~2.2 s | ~2.2 s |
 | Real person on screen | host on green screen over footage | host to camera, cuts to footage | host bottom ~60 %, footage top | host intro, then photo montage | host bottom half + poster, full-screen footage | **no** | **no** |
 | Voice | own, fast, energetic | own, very fast | own, very personal | own, calm | own | AI | AI |
-| Speech rate | 3.3 words/s | 4.2 words/s | 2.5 words/s (with long pauses for effect) | 3.9 words/s | ‡ | 2.6 words/s | 2.7 words/s |
+| Speech rate | 3.3 words/s | 4.2 words/s | 2.5 words/s (with long pauses for effect) | 3.9 words/s | not measured (music under the voice; Whisper caught only part of it) | 2.6 words/s | 2.7 words/s |
 | On-screen text | only the numbers ("₹1300 Crores!!!", "₹600 Crores") | series header + one stat line ("1.71 BILLION HOURS") | **none** | **none** | "1 MIN REVIEW" label | big kinetic type on every beat + captions | big kinetic type on every beat + captions |
 | Word-by-word captions | no | no | no | no | no | yes | yes |
 | Footage brightness | full colour | full colour | full colour | full colour | full colour | darkened by a scrim | darkened by a scrim |
 | Loudness | −11 LUFS | −18 LUFS | −11 LUFS | −20 LUFS | −15 LUFS | −14 LUFS | −14 LUFS |
 
 \* The whole-frame cut detector under-counts split layouts: the host half does not change, so cuts in the footage band score low. Counted by eye, the band cuts every ~2 s.
-
-‡ Filled in from the Whisper transcripts in section 3.
 
 ## 2. Patterns all five share (and we did not)
 
@@ -68,6 +66,7 @@
 - **Comparisons the audience already knows:**
   - "S.S. Rajamouli ki RRR yaad aa jayegi" (v3);
   - Baahubali and Salaar as the reference points (v1).
+- **Verdict first in a review** (v5): "agar main quickly review karun to itna hi bolunga ki… ye winning Spider-Man movie hai", then the reasons, then a personal pick ("Punisher ka role mujhe personally kaafi badhiya laga").
 - **Ride a trending debate into your own topic** (v4):
   - opens on the week's talking point ("Dhurandhar mein 40 ke Ranveer ke saamne 20 ki heroine… har koi hil gaya");
   - then pivots with "lekin kya aapko pata hai…" to an older film of the same actress.

@@ -1495,10 +1495,10 @@ def split_top(ctx: Ctx, sc):
         sc.add(ctx.layer(lab, W / 2, band_h, z=1.1, t_in=0.0, enter="none", role="label"))
     tag = beat_tag(ctx)
     if tag:
-        spr = ctx.hero(tag, (940, 150), max_lines=1, max_px=104, min_px=56, color="#FFFFFF", stroke=0.06, role="hero")
-        sc.add(ctx.layer(spr, W / 2, band_h - 120, z=1.0, t_in=ctx.t_word(tag, 0.1), enter="pop", role="hero"))
+        spr = ctx.hero(tag, (860, 150), max_lines=1, max_px=104, min_px=56, color="#FFFFFF", stroke=0.06, role="hero")
+        sc.add(ctx.layer(spr, W / 2, min(band_h - 120, 900), z=1.0, t_in=ctx.t_word(tag, 0.1), enter="pop", role="hero"))
     if host is None:  # words on the lower panel (captions are off for this scene)
-        kinetic_stack(ctx, sc, words_or_text(ctx), (SAFE["left"] + 20, band_h + 80, SAFE["right_low"], SAFE["bottom"] - 30),
+        kinetic_stack(ctx, sc, words_or_text(ctx), (SAFE["left"] + 20, band_h + 70, SAFE["right_low"], SAFE["bottom"] - 110),
                       max_words_page=4)
 
 

@@ -97,13 +97,13 @@
     "reply_window_min": 60
   },
   "reel_rules": {
-    "target_sec": 50,
-    "min_sec": 30,
+    "target_sec": 35,
+    "min_sec": 25,
     "max_sec": 60,
     "hard_max_sec": 90,
     "hook_max_words": 16,
     "script_words": [
-      110,
+      65,
       160
     ],
     "send_cta_words": [
@@ -122,7 +122,14 @@
     "cover_required": true,
     "one_topic_per_reel": true,
     "facts_need_sources": true,
-    "engagement_rule": "Script Doctor v4: exactly ONE explicit CTA = the two-option comment question, shown on screen over the last beat (cta_loop data.question) + caption + pinned comment; the voice ends on the loop line; one send-worthy line names a kind of person ('wo dost jo…'); never 'share / like / follow / save karo'."
+    "engagement_rule": "Script Doctor v4: exactly ONE explicit CTA = the two-option comment question, shown on screen over the last beat (cta_loop data.question) + caption + pinned comment; the voice ends on the loop line; one send-worthy line names a kind of person ('wo dost jo…'); never 'share / like / follow / save karo'.",
+    "length_test": "From 4 Nov 2026: make reels 25–40 s (target 35) for the next 6 reels, then compare avg watch % and skip rate with the 49 s Ramayan reel in the Tuesday review.",
+    "hook_rules": [
+      "Frame 1 already shows the whole hook text (3–6 big words) on a face close-up. No build-up from an empty or one-word frame: 82.7 % of views come from the Reels tab, where people judge the first frame, not the cover.",
+      "The payoff of the hook lands by 2 s. No set-up sentence first.",
+      "The send line comes before ~70 % of the reel, not only at the end: in the Ramayan reel only ~3 % were left at the end."
+    ],
+    "share_topics": "Pick topics people send to a friend: a meme they already share (e.g. Drishyam '2 October'), a debate with two sides, a detail most people missed, nostalgia with a fresh number. Plain news recaps and topics every page already covered rarely get sends."
   },
   "defaults": {
     "category": "movie_review",
@@ -156,5 +163,13 @@
     "A greeting as the first line; a reel without a cover; more than 5 hashtags",
     "Committing copyrighted stills or the final videos to this repo"
   ],
-  "growth_plan": "channel/GROWTH_PLAN.md"
+  "growth_plan": "channel/GROWTH_PLAN.md",
+  "lessons": [
+    {
+      "date": "2026-11-04",
+      "video": "2026-11-04_ramayana",
+      "numbers": "158 views, skip 62.7 %, avg watch 7 s of 49 s, 0 shares, 0 follows (at 2 h)",
+      "lesson": "Hook frame and topic, not length alone: half the viewers left in the first second. Next reels: hook text on frame 1, payoff by 2 s, 25–40 s, a share-able topic, send line earlier."
+    }
+  ]
 }

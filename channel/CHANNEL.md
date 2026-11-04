@@ -70,7 +70,7 @@ Timing sources:
 
 | Rule | Why |
 |---|---|
-| 45–60 s, never over 90 s | Watch-time %. Reels over 3 min are reported not to reach non-followers, and new accounts grow from non-followers |
+| 25–60 s, never over 90 s (test 25–40 s from 4 Nov 2026) | Watch-time %. Ramayan reel (49 s): avg watch 7 s, ~3 % reached the end. Reels over 3 min are reported not to reach non-followers, and new accounts grow from non-followers |
 | Hook ≤ 16 words, lands in ~2 s, subject on screen in frame 1 | Skip rate = viewers gone in the first 3 s |
 | One topic per reel | People watch to the end |
 | Last beat = send line + two-option question | Instagram's top signals: watch time, likes per reach, **sends per reach** (sends weigh more for non-followers) |
@@ -109,3 +109,9 @@ Timing sources:
   - Never repeat a topic that is already there, unless it is a deliberate Part 2.
 - `channel/state/ledger.json`: past looks. The next video's Style DNA differs from the last ones.
 - Commit + push both after every video, so a new chat remembers.
+
+## Lessons from real numbers
+
+| Date | Reel | Numbers | What we change |
+|---|---|---|---|
+| 4 Nov 2026 | Ramayan 1987 vs 2026 (49 s) | 158 views, skip 62.7 %, avg watch 7 s, 0 shares, 0 follows (at 2 h) | Half the viewers left in the first second. Frame 1 showed a poster with one word, the payoff came at ~4 s, the send line came at 45 s. Now: whole hook text on frame 1, payoff by 2 s, 25–40 s, send line before ~70 %, share-able topics (a meme people already send, a debate, a missed detail). |

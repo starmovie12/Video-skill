@@ -29,7 +29,8 @@ Every script and video made here is for this channel. Its profile, schedule and 
   - Every fact needs a source.
   - Make the angle different from earlier packs on the same film.
 - **Reel shape:**
-  - 45–60 s (hard max 90 s)
+  - 25–60 s, hard max 90 s (from 4 Nov 2026: test 25–40 s, see `reel_rules.length_test`)
+  - hook text on screen in frame 1, payoff by 2 s (`reel_rules.hook_rules`)
   - hook in the first 2 s
   - one topic per reel
   - end with a send line ("ye us dost ko bhejo jo…") and a two-option question

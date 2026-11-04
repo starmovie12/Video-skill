@@ -159,6 +159,86 @@
           "question"
         ]
       ]
+    },
+    {
+      "id": "2026-11-04-ramayan-1987-vs-2026",
+      "title": "1987 vs 2026: 39 saal mein Ramayan kitni badli",
+      "category": "movie_review",
+      "date": "2026-11-04 06:47",
+      "dna_sig": {
+        "palette_family": "dark-amber-amber",
+        "hero_font": "cinzel",
+        "background": "bokeh_night",
+        "motif": "light_rays",
+        "motion": "smooth",
+        "transitions": "ink,iris,spin,zoom_through",
+        "caption_style": "viral",
+        "opening": "word_smash",
+        "card_shape": "pill",
+        "layout_align": "center",
+        "music_mood": "epic_trailer",
+        "tone": "dark"
+      },
+      "frame_hashes": [
+        "b0f0e8e0f1f0f8e9",
+        "79c8488e8c1e1f5b",
+        "0004000604c49034",
+        "de1f163574e83b6b",
+        "9e8787978f833636",
+        "ee59d9f3e762864e",
+        "133c3c73574e9292",
+        "3f1c011098d9d8b9",
+        "12abb0e0a484c2e3",
+        "60ccb0b0f0d8d899",
+        "e0f0e0f871e0e8e9"
+      ],
+      "qa_passed": true,
+      "plan": [
+        [
+          "hook_slam",
+          "word_smash"
+        ],
+        [
+          "kinetic_line",
+          "diagonal"
+        ],
+        [
+          "split_compare",
+          "stacked"
+        ],
+        [
+          "cast_spotlight",
+          "portraits"
+        ],
+        [
+          "split_compare",
+          "stacked"
+        ],
+        [
+          "cast_spotlight",
+          "portraits"
+        ],
+        [
+          "kinetic_line",
+          "diagonal"
+        ],
+        [
+          "timeline",
+          "vertical"
+        ],
+        [
+          "stat_counter",
+          "bar"
+        ],
+        [
+          "list_reveal",
+          "numbers"
+        ],
+        [
+          "cta_loop",
+          "question"
+        ]
+      ]
     }
   ]
 }

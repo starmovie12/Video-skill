@@ -435,6 +435,8 @@ def words_or_text(ctx: Ctx, text=None):
 def hook_slam(ctx: Ctx, sc):
     """Pattern-interrupt opening: something hits the screen in frame 1 — never a greeting."""
     op = ctx.beat.get("variant") or ctx.dna["opening"]
+    if ctx.data.get("frame1") and op in ("split_reveal", "countdown", "rating_first"):
+        op = "question_flash" if op == "countdown" else "word_smash"  # nothing may cover the frame-1 hook text at t = 0
     sc.bg = make_bg(ctx)
     cam = camera_for(ctx, sc, "dolly")
     p = ctx.pal
@@ -489,16 +491,20 @@ def hook_slam(ctx: Ctx, sc):
     if frame1:
         # Frame-1 hook: the whole hook text is already on screen at t=0 (Reels-tab viewers judge the first frame, not
         # the cover). The spoken words it covers are not stacked again; the rest of the hook line builds below it.
-        t1 = ctx.hero(frame1, (940, 560), max_lines=3, max_px=210, color=p["accent"], role="hero")
+        pres = ctx.assets.get("presenter") is not None and not ctx.data.get("no_presenter")
+        t1 = ctx.hero(frame1, (940, 330 if pres else 560), max_lines=3, max_px=170 if pres else 210, color=p["accent"], role="hero")
         h1 = t1.h - 2 * t1.meta["pad"]
-        y1 = max(box[1], ctx.top + 40)
+        y1 = max(box[1], ctx.top + 40) if not pres else ctx.top + 10
         sc.add(ctx.layer(t1, W / 2, y1 + h1 / 2, z=1.1, t_in=0.0, enter="none", idle="pulse", role="hero"))
         skip = int(ctx.data.get("frame1_words", len(frame1.split())))
         words = words[skip:]
-        box = (box[0], y1 + h1 + 50, box[2], box[3])
+        box = (box[0], y1 + h1 + (24 if pres else 50), box[2], box[3])
     else:
         flash = Image.new("RGBA", (W, H), (255, 255, 255, 255))
         sc.add(Layer(Sprite(flash, 0.5, 0.5), W / 2, H / 2, z=2.0, t_in=0.0, t_out=0.0, exit="fade", enter="none", role="deco"))
+    if ctx.assets.get("presenter") is not None and not ctx.data.get("no_presenter"):
+        add_presenter(ctx, sc, "bottom")  # the channel host's face on frame 1, under the hook text (top creators' first frame)
+        box = (box[0], box[1], box[2], min(box[3], 905))
     if words:
         kinetic_stack(ctx, sc, words, box, max_words_page=8)
     add_motif(ctx, sc)
@@ -1458,6 +1464,45 @@ def _tag_layer(ctx: Ctx, sc, text, y, style):
     sc.cue(t_in, "pop", 0.5)
 
 
+# ───────────────────────── presenter (the channel host's cut-out photo) ─────────────────────────
+PRESENTER_CAP_Y = 845  # captions above the presenter's head in "bottom" mode
+
+
+def add_presenter(ctx: Ctx, sc, mode="bottom", top=None):
+    """Put the channel host's cut-out on the scene (v1 "host over footage" style). It lifts slightly on every spoken word
+    (idle "talk"); the mouth does not move: it is a photo. Returns the layer, or None when the channel has no presenter.
+    mode: bottom = waist-up at the bottom centre (head at ~y 930); panel = head-and-shoulders filling the lower panel of a
+    split layout starting at `top`; full = big, head near the top third (a "talking to camera" beat)."""
+    im = ctx.assets.get("presenter")
+    if im is None:
+        return None
+    if mode == "panel":
+        w = 860
+        top = (top or 1060) + 26
+    elif mode == "full":
+        w = 1080
+        top = 470
+    else:
+        w = 800
+        top = 930
+    h = int(im.height * w / im.width)
+    key = ("presenter", w)
+    cache = ctx.assets.setdefault("_presenter_cache", {})
+    spr_img = cache.get(key)
+    if spr_img is None:
+        spr_img = gfx.with_shadow(im.resize((w, h), Image.Resampling.LANCZOS), 30, 0.55, 22)
+        cache[key] = spr_img
+    pad = (spr_img.height - h) // 2
+    x = W / 2 - (40 if mode == "bottom" else 0)  # a touch left: the Reels buttons sit on the right
+    ly = ctx.layer(Sprite(spr_img, 0.5, 0.0), x, top - pad, z=0.96, t_in=0.0, enter="none", idle="talk", role="image")
+    ly.talk = [w_["t0"] for w_ in ctx.words]
+    sc.add(ly)
+    sc.meta["presenter"] = mode
+    if mode == "bottom":
+        sc.meta["cap_y"] = PRESENTER_CAP_Y
+    return ly
+
+
 @archetype("footage_clean", roles=("fact", "story", "line", "context", "stat", "compare", "opinion", "list", "cast"),
            variants=("news", "label"))
 def footage_clean(ctx: Ctx, sc):
@@ -1466,6 +1511,8 @@ def footage_clean(ctx: Ctx, sc):
     camera_for(ctx, sc, "push")
     v = ctx.variant if ctx.variant in ("news", "label") else "news"
     y = 560 if v == "news" else SAFE["top"] + 40
+    if not ctx.data.get("no_presenter"):
+        add_presenter(ctx, sc, "bottom")
     _tag_layer(ctx, sc, beat_tag(ctx), y, v)
 
 
@@ -1496,8 +1543,12 @@ def split_top(ctx: Ctx, sc):
     tag = beat_tag(ctx)
     if tag:
         spr = ctx.hero(tag, (860, 150), max_lines=1, max_px=104, min_px=56, color="#FFFFFF", stroke=0.06, role="hero")
-        sc.add(ctx.layer(spr, W / 2, min(band_h - 120, 900), z=1.0, t_in=ctx.t_word(tag, 0.1), enter="pop", role="hero"))
-    if host is None:  # words on the lower panel (captions are off for this scene)
+        ty = min(band_h - 120, 900) if (host is not None or ctx.assets.get("presenter") is None) else band_h - 250
+        sc.add(ctx.layer(spr, W / 2, ty, z=1.0, t_in=ctx.t_word(tag, 0.1), enter="pop", role="hero"))
+    if host is None and ctx.assets.get("presenter") is not None:  # the channel host's photo in the lower panel
+        add_presenter(ctx, sc, "panel", top=band_h)
+        sc.meta["cap_y"] = band_h - 70
+    elif host is None:  # words on the lower panel (captions are off for this scene)
         kinetic_stack(ctx, sc, words_or_text(ctx), (SAFE["left"] + 20, band_h + 70, SAFE["right_low"], SAFE["bottom"] - 110),
                       max_words_page=4)
 
@@ -1506,6 +1557,12 @@ def split_top(ctx: Ctx, sc):
 def host_cam(ctx: Ctx, sc):
     """The operator on camera, full frame (needs assets.host). Falls back to footage_clean when there is no host video."""
     host = _host_source(ctx, (W, H))
+    if host is None and ctx.assets.get("presenter") is not None:
+        sc.bg = make_bg(ctx)
+        camera_for(ctx, sc, "push")
+        add_presenter(ctx, sc, "full")
+        _tag_layer(ctx, sc, beat_tag(ctx), SAFE["top"] + 90, "news")
+        return
     if host is None:
         return footage_clean(ctx, sc)
     from .media import SplitBackground
@@ -1563,7 +1620,7 @@ def add_stickers(ctx: Ctx, sc):
             x, y = cx_, cy_
             break
     else:
-        return  # no free spot → no sticker (never cover text)
+        return  # no free spot → no sticker (never cover text, never the presenter's face: his cut-out is an "image" box)
     left = x < W / 2
     sc.add(ctx.layer(spr, x, y, z=1.15, t_in=t_in, t_out=min(ctx.dur - 0.05, t_in + 2.4), enter="pop", exit="pop_out",
                      motion="elastic", idle="float", idle_amp=1.6, rot=-8 if left else 8, role="sticker"))

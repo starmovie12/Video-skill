@@ -195,5 +195,15 @@
     }
   ],
   "_about_defaults": "No DNA dims pinned here on purpose: pinning caption_style/motif made every reel look the same. Voice +28 %: the 5 reference creators speak 3.3–4.2 words/s; our +18 % voice was 2.7 words/s.",
-  "_reference_analysis": "docs/REFERENCE_ANALYSIS.md (5 top Hindi film shorts, 4 Nov 2026)"
+  "_reference_analysis": "docs/REFERENCE_ANALYSIS.md (5 top Hindi film shorts, 4 Nov 2026)",
+  "host": {
+    "name": "Scene Samjho host (the operator)",
+    "photo": "host/host.jpg",
+    "cutout": "host/host_cutout.png",
+    "added": "2026-11-04",
+    "source": "Photo sent by the operator in chat on 4 Nov 2026 as his own photo, to appear in every video.",
+    "where": "hook (frame 1, under the hook text), every footage_clean scene (bottom, waist-up), the lower panel of split scenes, host_cam beats, and the cover",
+    "limits": "A still photo: it lifts on every spoken word but the mouth does not move. For a real talking look, record a selfie video (assets.host).",
+    "off": "project.json \"presenter\": false"
+  }
 }

@@ -416,3 +416,30 @@ def test_rotate_fit_and_split_background_with_host(tmp_path):
     assert lb.frame(0.1).size == (540, 960)
     rc = ClipSource(clip, 0.0, 2.0, 1.5, fit="rotate", size=(540, 960))
     assert rc.frame(0.1).getpixel((270, 480))[1] > 100
+
+
+def test_presenter_on_hook_and_footage_scenes(tmp_path, monkeypatch):
+    """The channel host's cut-out: on the hook (frame 1) and on footage_clean scenes, moving on spoken words, captions
+    moved above the head; never on designed cards."""
+    from PIL import Image
+    from rvs.channel import host_cutout
+    from rvs.timeline import Timeline
+    monkeypatch.setenv("RVS_HOME", str(tmp_path))
+    assert host_cutout() is not None and Image.open(host_cutout()).mode == "RGBA"
+    proj = json.loads((ROOT / "examples/octopus_facts/project.json").read_text(encoding="utf-8"))
+    proj["beats"][0]["archetype"] = "hook_slam"
+    proj["beats"][0]["data"] = {"frame1": " ".join(proj["beats"][0]["show"].split()[:3])}
+    img = tmp_path / "still.jpg"
+    Image.new("RGB", (900, 1600), (90, 120, 160)).save(img)
+    pres = Image.new("RGBA", (400, 600), (0, 0, 0, 0))
+    pres.paste((200, 160, 140, 255), (100, 50, 300, 600))
+    d = D.generate(proj, None)
+    d["look"] = "clean"
+    segs = {i: [(0.0, {"file": "still.jpg", "kind": "image", "need": 3.0})] for i in range(len(proj["beats"]))}
+    tl = Timeline(proj, _fake_voice(proj["beats"]), d, {"root": tmp_path, "media_segments": segs, "presenter": pres}).build_all()
+    talk = [s for s in tl.scenes if any(getattr(ly, "idle", "") == "talk" for ly in s.layers)]
+    assert tl.scenes[0] in talk  # frame 1 shows the host
+    clean = [s for s in tl.scenes if s.archetype == "footage_clean"]
+    assert clean and all(s in talk and s.meta.get("cap_y") for s in clean)
+    assert not any(s in talk for s in tl.scenes if s.archetype in ("stat_counter", "cta_loop"))
+    assert tl.frame(0.0).size == (W, H)

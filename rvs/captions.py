@@ -113,7 +113,8 @@ class Captioner:
                 return gi
         return None
 
-    def render(self, frame: Image.Image, t: float) -> None:
+    def render(self, frame: Image.Image, t: float, y0: float | None = None) -> None:
+        """y0: per-scene caption line (e.g. above a presenter's head); default = the DNA caption position."""
         gi = self.active_group(t)
         if gi is None:
             return
@@ -123,7 +124,7 @@ class Captioner:
         dt = t - g["t0"]
         k = 0.82 + 0.18 * spring(dt, 26, 0.55)
         a = clamp(dt / 0.06) * clamp((g["t1"] - t) / 0.06)
-        y = self.y + 18 * (1 - ease_out_cubic(dt / 0.18))
+        y = (self.y if y0 is None else y0) + 18 * (1 - ease_out_cubic(dt / 0.18))
         ai = None
         for i, w in enumerate(g["words"]):
             if w["t0"] - 0.03 <= t:

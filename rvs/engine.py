@@ -154,6 +154,12 @@ class Layer:
                 k = 1 + 0.05 * ia * max(0, math.sin(dt * 5.0 + ph)) ** 6
                 sx *= k
                 sy *= k
+            elif self.idle == "talk":  # presenter photo: a small lift + swell on every spoken word, slow breathing between
+                bump = min(1.6, sum(math.exp(-(dt - s) / 0.09) for s in (getattr(self, "talk", None) or ()) if 0 <= dt - s < 0.45))
+                k = 1 + 0.012 * bump + 0.006 * math.sin(dt * 2.1 + ph)
+                sx *= k
+                sy *= k
+                y -= 7 * bump
         if m.get("jitter") and dt > 0:
             j = int(t * FPS)
             if (j * 7 + self.seed) % 23 == 0:

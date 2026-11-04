@@ -135,7 +135,9 @@ def run_qa(work: Path, project: dict, tl, final: Path, voice: dict, mix_stats: d
                 right_lim = 1000 if y1 > 1000 else 1045
                 if x0 < 35 or x1 > right_lim or y0 < 225 or y1 > 1495:
                     unsafe.append(f"{s.archetype}:{role}:{text[:20]}:({int(x0)},{int(y0)},{int(x1)},{int(y1)})")
-                if s.meta.get("captions") and y1 > tl.captions.y - tl.captions.px * 0.75:
+                cy, half = s.meta.get("cap_y"), tl.captions.px * 0.75
+                hit = (y1 > tl.captions.y - half) if cy is None else (y0 < cy + half and y1 > cy - half)  # cap_y: a moved caption line
+                if s.meta.get("captions") and hit:
                     collide.append(f"{s.archetype}:{role}:{text[:20]}:bottom={int(y1)}")
     for gi in range(len(tl.captions.groups)):
         tl.captions._sprites(gi)

@@ -5,10 +5,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from PIL import ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 from . import gfx
-from .core import W, read_json
+from .core import H, W, hex2rgb, read_json
 from .typo import apply_case, text_sprite
 
 GENRE_TAGS = {"horror": "#horror", "thriller": "#thriller", "action": "#action", "comedy": "#comedy", "romance": "#romance", "drama": "#drama",
@@ -40,9 +40,24 @@ def make_cover(tl, project: dict, out_dir: Path) -> dict:
                       max_px=230, min_px=80, stroke=0.05, stroke_color="#000000", shadow=(0, 10, 18, 0.8, "#000000"),
                       highlight={re.sub(r"\W", "", w.lower()) for w in text.split()[-1:]}, highlight_color=pal["accent"])
     y_mid = 285 + (1635 - 285) * 0.45  # centre of the 4:5 grid-safe box
+    pres = tl.assets.get("presenter")
+    if pres is not None:  # top creators' cover: the host's face + one short claim (docs/REFERENCE_ANALYSIS.md)
+        tsp = text_sprite(apply_case(text, "upper"), F["hero"], None, deva_fid=F["deva"], color="#FFFFFF", box=(960, 430), max_lines=3,
+                          max_px=200, min_px=80, stroke=0.05, stroke_color="#000000", shadow=(0, 10, 18, 0.8, "#000000"),
+                          highlight={re.sub(r"\W", "", w.lower()) for w in text.split()[-1:]}, highlight_color=pal["accent"])
+        y_mid = 330 + tsp.h / 2
+        glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        gd = ImageDraw.Draw(glow)
+        gd.ellipse((W / 2 - 520, 820, W / 2 + 480, 1900), fill=hex2rgb(pal["accent"]) + (120,))
+        im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(110)))
+        pw = 900
+        ph = int(pres.height * pw / pres.width)
+        pim = gfx.with_shadow(pres.resize((pw, ph), Image.Resampling.LANCZOS), 30, 0.6, 20)
+        pad = (pim.width - pw) // 2
+        im.alpha_composite(pim, (int(W / 2 - pim.width / 2 - 30), int(y_mid + tsp.h / 2 + 30 - pad)))
     im.alpha_composite(tsp.img, (int(W / 2 - tsp.w / 2), int(y_mid - tsp.h / 2)))
     facts = project.get("facts", {})
-    if project.get("category") == "movie_review" and facts.get("rating") is not None:
+    if project.get("category") == "movie_review" and facts.get("rating") is not None and pres is None:
         n = 5
         val = float(facts["rating"]) / float(facts.get("out_of", 5)) * n
         y = int(y_mid + tsp.h / 2 + 10)

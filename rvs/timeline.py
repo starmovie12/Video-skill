@@ -33,6 +33,18 @@ def load_assets(project: dict, root: Path) -> dict:
             raise RvsError("ASSET_MISSING", f"host video not found: {hp}")
         a["host"] = {"path": hp, "offset": float(asd.get("host_offset", 0.0))}
     a["series"] = project.get("series") or S.SERIES_DEFAULT.get(project.get("pillar", ""), "SCENE SAMJHO")
+    # the channel presenter (operator's cut-out photo): on the hook, the footage scenes and the cover.
+    # project "presenter": false turns it off; a path string uses another cut-out (transparent PNG).
+    pres = asd.get("presenter", project.get("presenter"))
+    if pres is not False and project.get("channel"):
+        pf = None
+        if isinstance(pres, str):
+            pf = (root / pres) if not Path(pres).is_absolute() else Path(pres)
+        else:
+            from .channel import host_cutout
+            pf = host_cutout()
+        if pf is not None and Path(pf).exists():
+            a["presenter"] = Image.open(pf).convert("RGBA")
     return a
 
 
@@ -219,7 +231,7 @@ class Timeline:
             fr = self.scenes[self.scene_at(t)].frame(t)
         if self.series_bar is not None:
             fr.alpha_composite(self.series_bar, (0, 232))
-        self.captions.render(fr, t)
+        self.captions.render(fr, t, self.scenes[self.scene_at(t)].meta.get("cap_y"))
         if self.progress:
             q = min(1.0, t / self.duration)
             d = ImageDraw.Draw(fr)

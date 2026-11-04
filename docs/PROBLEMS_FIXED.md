@@ -183,3 +183,9 @@ Tests: 21 → 23 (`test_channel_defaults_lint_hashtags`, `test_channel_log_and_b
 | R-08 | Our AI voice: 2.7 words/s; the references: 3.3–4.2 | Channel voice rate +28 %; `reel_rules.voice_style` (talk like a person, claim + number first, curiosity gap, callback ending) |
 
 Analysis: `docs/REFERENCE_ANALYSIS.md`. Tests: 25 → 27 (`test_looks_map_beats_and_never_repeat`, `test_rotate_fit_and_split_background_with_host`).
+
+| # | Operator asked | Fix |
+|---|---|---|
+| R-09 | "Meri photo har video mein aaye, mera look" | `channel/host/` (photo + background-removed cut-out, `channel.json` → `host`); presenter on the hook, `footage_clean`, `split_top` panel, `host_cam` and the cover; `idle: "talk"` (moves on every spoken word); per-scene caption line `cap_y` above his head; stickers never land on him; openings that would cover frame 1 (`split_reveal`, `countdown`, `rating_first`) are swapped when `frame1` is set |
+
+Tests: 27 → 28 (`test_presenter_on_hook_and_footage_scenes`).
